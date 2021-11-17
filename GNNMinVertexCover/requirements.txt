@@ -8,7 +8,7 @@ certifi==2021.10.8
 charset-normalizer==2.0.7
 colorama==0.4.4
 cycler==0.11.0
-dgl==0.6.1
+dgl==0.7.2
 distlib==0.3.3
 filelock==3.4.0
 fonttools==4.28.1

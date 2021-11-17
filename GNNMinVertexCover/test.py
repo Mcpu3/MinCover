@@ -271,4 +271,5 @@ def test_test(dataset, model, labels):
 
 
 if __name__ == '__main__':
+    freeze_support()
     main()
