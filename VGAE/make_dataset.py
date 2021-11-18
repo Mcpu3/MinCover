@@ -39,7 +39,7 @@ def main():
                             header=False, index=False, mode='a')
         gs.append(g)
     process_map(savefig_A_wrapper, [(g, './fig/A/{}.jpg'.format(g_id))
-                for g, g_id in zip(gs, range(n_gs))], max_workers=os.cpu_count())
+                for g, g_id in zip(gs, range(n_gs))], max_workers=os.cpu_count()+1)
 
 
 def savefig_A_wrapper(args):

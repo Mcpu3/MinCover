@@ -108,7 +108,7 @@ def train(dataset, model):
     train_dataset = dataset[:n_train]
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     with SummaryWriter() as writer:
-        for e in tqdm(range(96)):
+        for e in tqdm(range(64)):
             accs = np.array([])
             aucs = np.array([])
             aps = np.array([])
@@ -169,11 +169,11 @@ def test(dataset, model):
             gs.append(g)
             min_covers.append(min_cover)
             pbar.set_postfix_str(
-                'epoch: {}, loss: {:.3f}, acc: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(e, loss, np.average(accs), np.average(aucs), np.average(aps)))
+                'loss: {:.3f}, acc: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(loss, np.average(accs), np.average(aucs), np.average(aps)))
     print('Loss: {:.3f}, Acc: {:.3f}, AUC: {:.3f}, AP: {:.3f}'.format(
         loss, np.average(accs), np.average(aucs), np.average(aps)))
     process_map(savefig_min_cover, [(g, min_cover, './fig/tests/{}.jpg'.format(n_train + g_ind))
-                for g, min_cover, g_ind in zip(gs, min_covers, range(len(test_dataset)))], max_workers=os.cpu_count())
+                for g, min_cover, g_ind in zip(gs, min_covers, range(len(test_dataset)))], max_workers=os.cpu_count()+1)
 
 
 def savefig_min_cover_wrapper(args):

@@ -18,14 +18,14 @@ def main():
         g = nx.fast_gnp_random_graph(n, p)
         gs.append(g)
     min_covers = process_map(min_vertex_cover_wrapper, [
-                             (g,) for g in gs], max_workers=os.cpu_count())
+                             (g,) for g in gs], max_workers=os.cpu_count()+1)
     approx_min_covers = process_map(approx_min_vertex_cover_wrapper, [
-                                    (g,) for g in gs], max_workers=os.cpu_count())
-    for g_id in tqdm(range(n_gs)):
+                                    (g,) for g in gs], max_workers=os.cpu_count()+1)
+    for g_id, g in enumerate(tqdm(gs)):
         d_nodes = {'g_id': [], 'nodes': [], 'labels': []}
-        d_nodes['g_id'] = [g_id] * g.number_of_nodes()
+        d_nodes['g_id'] = [g_id for _ in range(g.number_of_nodes())]
         d_nodes['nodes'] = [node for node in range(g.number_of_nodes())]
-        d_nodes['labels'] = [0] * g.number_of_nodes()
+        d_nodes['labels'] = [0 for _ in range(g.number_of_nodes())]
         for node in min_covers[g_id]:
             d_nodes['labels'][node] = 1
         df_nodes = pandas.DataFrame(d_nodes)
@@ -35,7 +35,7 @@ def main():
             df_nodes.to_csv('./dataset/nodes.csv',
                             header=False, index=False, mode='a')
         d_edges = {'g_id': [], 'src': [], 'dst': []}
-        d_edges['g_id'] = [g_id] * (g.number_of_edges() * 2)
+        d_edges['g_id'] = [g_id for _ in range(g.number_of_edges() * 2)]
         for edge in g.edges():
             d_edges['src'].append(edge[0])
             d_edges['dst'].append(edge[1])
@@ -47,11 +47,10 @@ def main():
         else:
             df_edges.to_csv('./dataset/edges.csv',
                             header=False, index=False, mode='a')
-        gs.append(g)
     process_map(savefig_min_cover_wrapper, [(g, min_cover, './fig/min_covers/{}.jpg'.format(g_id))
-                for g, min_cover, g_id in zip(gs, min_covers, range(n_gs))], max_workers=os.cpu_count())
+                for g, min_cover, g_id in zip(gs, min_covers, range(n_gs))], max_workers=os.cpu_count()+1)
     process_map(savefig_min_cover_wrapper, [(g, approx_min_cover, './fig/approx_min_covers/{}.jpg'.format(g_id))
-                for g, approx_min_cover, g_id in zip(gs, approx_min_covers, range(n_gs))], max_workers=os.cpu_count())
+                for g, approx_min_cover, g_id in zip(gs, approx_min_covers, range(n_gs))], max_workers=os.cpu_count()+1)
 
 
 def min_vertex_cover_wrapper(args):

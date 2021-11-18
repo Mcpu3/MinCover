@@ -21,13 +21,13 @@ def main():
     dataset = MinVertexCoverDataset()
     n_train = dataset.n_train
     gs = []
+    labels = []
     for g in dataset[n_train:]:
+        labels.append(g.ndata['labels'])
         g = dgl.remove_self_loop(g)
         g = dgl.to_networkx(g)
         g = nx.Graph(g)
         gs.append(g)
-    labels = process_map(min_vertex_cover_wrapper, [
-                         (g,) for g in gs], max_workers=os.cpu_count())
     acc, auc, ap, sum, avg = test_min_cover(gs, labels)
     print('Min Cover:')
     print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Avg: {:.3f}s'.format(
@@ -120,40 +120,6 @@ class GCN(nn.Module):
             h = F.relu(h + self.biases[hidden_ind])
         h = F.softmax(h, dim=1)
         return h
-
-
-def min_vertex_cover_wrapper(args):
-    g = args[0]
-    with Pool(1) as p:
-        labels = p.map(min_vertex_cover, [[g]])
-    return labels[0]
-
-
-def min_vertex_cover(args):
-    g = args[0]
-    min_cover = set()
-    min_weight = sys.maxsize
-    for i in range(2 ** g.number_of_nodes()):
-        nodes = set()
-        edges = set()
-        for j in range(g.number_of_nodes()):
-            if (i >> j) & 1:
-                nodes.add(j)
-                for k in g.adj[j]:
-                    if j < k:
-                        edges.add((j, k))
-                    else:
-                        edges.add((k, j))
-        if edges == set(g.edges()):
-            if len(nodes) < min_weight:
-                min_cover = nodes
-                min_weight = len(nodes)
-    min_cover = np.array(list(min_cover))
-    labels = np.array([0 for _ in range(g.number_of_nodes())])
-    for node in min_cover:
-        labels[node] = 1
-    labels = torch.tensor(labels, dtype=torch.int64)
-    return labels
 
 
 def min_cover(g):
