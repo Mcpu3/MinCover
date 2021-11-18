@@ -1,13 +1,8 @@
-import os
-from multiprocessing import Pool, freeze_support
 import dgl
 from dgl.data import DGLDataset
 from dgl.nn import GraphConv
-import matplotlib.pyplot as plt
-import networkx as nx
 import numpy as np
 import sklearn.metrics
-from tqdm.contrib.concurrent import process_map
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -18,12 +13,11 @@ from tqdm import tqdm
 
 def main():
     dataset = MinVertexCoverDataset()
+    train_dataset = dataset[:dataset.n_train]
     model = GCN(dataset.n_feats, [16, 8, 4], dataset.n_classes)
     model.train()
-    model = train(dataset, model)
+    model = train(train_dataset, model)
     torch.save(model.state_dict(), './models/model.pth')
-    model.eval()
-    test(dataset, model)
 
 
 class MinVertexCoverDataset(DGLDataset):
@@ -104,15 +98,13 @@ class GCN(nn.Module):
 
 
 def train(dataset, model):
-    n_train = dataset.n_train
-    train_dataset = dataset[:n_train]
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     with SummaryWriter() as writer:
         for e in tqdm(range(64)):
             accs = np.array([])
             aucs = np.array([])
             aps = np.array([])
-            with tqdm(train_dataset) as pbar:
+            with tqdm(dataset) as pbar:
                 for g in pbar:
                     feats = g.ndata['feats']
                     labels = g.ndata['labels']
@@ -138,67 +130,5 @@ def train(dataset, model):
     return model
 
 
-def test(dataset, model):
-    n_train = dataset.n_train
-    test_dataset = dataset[n_train:]
-    accs = np.array([])
-    aucs = np.array([])
-    aps = np.array([])
-    gs = []
-    min_covers = []
-    with tqdm(test_dataset) as pbar:
-        for g in pbar:
-            feats = g.ndata['feats']
-            labels = g.ndata['labels']
-            logits = model(g, feats)
-            pred = logits.argmax(1)
-            acc = sklearn.metrics.accuracy_score(labels, pred)
-            accs = np.append(accs, acc)
-            auc = sklearn.metrics.roc_auc_score(labels, pred)
-            aucs = np.append(aucs, auc)
-            ap = sklearn.metrics.average_precision_score(labels, pred)
-            aps = np.append(aps, ap)
-            loss = F.cross_entropy(logits, labels)
-            g = dgl.remove_self_loop(g)
-            g = dgl.DGLGraph.to_networkx(g)
-            g = nx.Graph(g)
-            min_cover = set()
-            for node in range(g.number_of_nodes()):
-                if pred[node]:
-                    min_cover.add(node)
-            gs.append(g)
-            min_covers.append(min_cover)
-            pbar.set_postfix_str(
-                'loss: {:.3f}, acc: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(loss, np.average(accs), np.average(aucs), np.average(aps)))
-    print('Loss: {:.3f}, Acc: {:.3f}, AUC: {:.3f}, AP: {:.3f}'.format(
-        loss, np.average(accs), np.average(aucs), np.average(aps)))
-    process_map(savefig_min_cover, [(g, min_cover, './fig/tests/{}.jpg'.format(n_train + g_ind))
-                for g, min_cover, g_ind in zip(gs, min_covers, range(len(test_dataset)))], max_workers=os.cpu_count()+1)
-
-
-def savefig_min_cover_wrapper(args):
-    g, min_cover, path = args
-    with Pool(1) as p:
-        p.map(savefig_min_cover, [[g, min_cover, path]])
-
-
-def savefig_min_cover(args):
-    g, min_cover, path = args
-    pos = nx.circular_layout(g)
-    node_color = ['#333333'] * g.number_of_nodes()
-    for node in min_cover:
-        node_color[node] = '#009b9f'
-    edge_color = ['#000000'] * g.number_of_edges()
-    for edge_ind, edge in enumerate(g.edges()):
-        if edge[0] not in min_cover and edge[1] not in min_cover:
-            edge_color[edge_ind] = '#942343'
-    nx.draw_networkx(g, pos, node_color=node_color,
-                     edge_color=edge_color, font_color='#ffffff')
-    plt.tight_layout()
-    plt.savefig(path, dpi=300, pil_kwargs={'quality': 85})
-    plt.close()
-
-
 if __name__ == '__main__':
-    freeze_support()
     main()

@@ -6,6 +6,7 @@ from time import time
 import dgl
 from dgl.data import DGLDataset
 from dgl.nn import GraphConv
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -14,15 +15,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from tqdm.contrib.concurrent import process_map
-from tqdm import tqdm
 
 
 def main():
     dataset = MinVertexCoverDataset()
-    n_train = dataset.n_train
+    test_dataset = dataset[dataset.n_train:]
     gs = []
     labels = []
-    for g in dataset[n_train:]:
+    for g in test_dataset:
         labels.append(g.ndata['labels'])
         g = dgl.remove_self_loop(g)
         g = dgl.to_networkx(g)
@@ -43,6 +43,27 @@ def main():
     print('Test:')
     print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Avg: {:.3f}s'.format(
         acc, auc, ap, sum, avg))
+    preds_and_times_elapsed = process_map(
+        min_cover_wrapper, [(g,) for g in gs], max_workers=os.cpu_count()+1)
+    preds = []
+    for pred , _ in preds_and_times_elapsed:
+        preds.append(pred)
+    process_map(savefig_min_cover_wrapper, [(g, pred, './fig/min_covers/{}.jpg'.format(dataset.n_train + g_index))
+                for g, pred, g_index in zip(gs, preds, range(len(gs)))], max_workers=os.cpu_count()+1)
+    preds_and_times_elapsed = process_map(
+        approx_min_cover_wrapper, [(g,) for g in gs], max_workers=os.cpu_count()+1)
+    preds = []
+    for pred , _ in preds_and_times_elapsed:
+        preds.append(pred)
+    process_map(savefig_min_cover_wrapper, [(g, pred, './fig/approx_min_covers/{}.jpg'.format(dataset.n_train + g_index))
+                for g, pred, g_index in zip(gs, preds, range(len(gs)))], max_workers=os.cpu_count()+1)
+    preds_and_times_elapsed = process_map(
+        test_wrapper, [(g, model) for g in test_dataset], max_workers=os.cpu_count()+1)
+    preds = []
+    for pred , _ in preds_and_times_elapsed:
+        preds.append(pred)
+    process_map(savefig_min_cover_wrapper, [(g, pred, './fig/tests/{}.jpg'.format(dataset.n_train + g_index))
+                for g, pred, g_index in zip(gs, preds, range(len(gs)))], max_workers=os.cpu_count()+1)
 
 
 class MinVertexCoverDataset(DGLDataset):
@@ -122,7 +143,16 @@ class GCN(nn.Module):
         return h
 
 
-def min_cover(g):
+def min_cover_wrapper(args):
+    g = args[0]
+    with Pool(1) as p:
+        pred, time_elapsed = p.map(min_cover, [[g]])[0]
+    return pred, time_elapsed
+
+
+def min_cover(args):
+    g = args[0]
+    time_start = time()
     min_cover = set()
     min_weight = sys.maxsize
     for i in range(2 ** g.number_of_nodes()):
@@ -141,74 +171,94 @@ def min_cover(g):
                 min_cover = nodes
                 min_weight = len(nodes)
     min_cover = np.array(list(min_cover))
-    labels = np.array([0 for _ in range(g.number_of_nodes())])
+    pred = np.array([0 for _ in range(g.number_of_nodes())])
     for node in min_cover:
-        labels[node] = 1
-    labels = torch.tensor(labels, dtype=torch.int64)
-    return labels
+        pred[node] = 1
+    pred = torch.tensor(pred, dtype=torch.int64)
+    time_end = time()
+    time_elapsed = time_end - time_start
+    return pred, time_elapsed
 
 
 def test_min_cover(gs, labels):
     accs = np.array([])
     aucs = np.array([])
     aps = np.array([])
+    preds_and_times_elapsed = process_map(
+        min_cover_wrapper, [(g,) for g in gs], max_workers=os.cpu_count()+1)
+    preds = []
     times_elapsed = np.array([])
-    with tqdm(gs) as pbar:
-        for g, label in zip(pbar, labels):
-            time_start = time()
-            pred = min_cover(g)
-            time_end = time()
-            acc = sklearn.metrics.accuracy_score(label, pred)
-            accs = np.append(accs, acc)
-            auc = sklearn.metrics.roc_auc_score(label, pred)
-            aucs = np.append(aucs, auc)
-            ap = sklearn.metrics.average_precision_score(label, pred)
-            aps = np.append(aps, ap)
-            time_elapsed = time_end - time_start
-            times_elapsed = np.append(times_elapsed, time_elapsed)
-            pbar.set_postfix_str('acc: {:.3f}, auc: {:.3f}, ap: {:.3f}, elapsed_time: {:.3f}s'.format(
-                np.average(accs), np.average(aucs), np.average(aps), time_elapsed))
+    for pred, time_elapsed in preds_and_times_elapsed:
+        preds.append(pred)
+        times_elapsed = np.append(times_elapsed, time_elapsed)
+    for pred, label in zip(preds, labels):
+        acc = sklearn.metrics.accuracy_score(label, pred)
+        accs = np.append(accs, acc)
+        auc = sklearn.metrics.roc_auc_score(label, pred)
+        aucs = np.append(aucs, auc)
+        ap = sklearn.metrics.average_precision_score(label, pred)
+        aps = np.append(aps, ap)
     return np.average(accs), np.average(aucs), np.average(aps), np.sum(times_elapsed), np.average(times_elapsed)
 
 
-def approx_min_cover(g):
+def approx_min_cover_wrapper(args):
+    g = args[0]
+    with Pool(1) as p:
+        pred, time_elapsed = p.map(approx_min_cover, [[g]])[0]
+    return pred, time_elapsed
+
+
+def approx_min_cover(args):
+    g = args[0]
+    time_start = time()
     min_cover = nx.algorithms.approximation.min_weighted_vertex_cover(g)
     min_cover = np.array(list(min_cover))
-    labels = np.array([0 for _ in range(g.number_of_nodes())])
+    pred = np.array([0 for _ in range(g.number_of_nodes())])
     for node in min_cover:
-        labels[node] = 1
-    labels = torch.tensor(labels, dtype=torch.int64)
-    return labels
+        pred[node] = 1
+    pred = torch.tensor(pred, dtype=torch.int64)
+    time_end = time()
+    time_elapsed = time_end - time_start
+    return pred, time_elapsed
 
 
 def test_approx_min_cover(gs, labels):
     accs = np.array([])
     aucs = np.array([])
     aps = np.array([])
+    preds_and_times_elapsed = process_map(
+        approx_min_cover_wrapper, [(g,) for g in gs], max_workers=os.cpu_count()+1)
+    preds = []
     times_elapsed = np.array([])
-    with tqdm(gs) as pbar:
-        for g, label in zip(pbar, labels):
-            time_start = time()
-            pred = approx_min_cover(g)
-            time_end = time()
-            acc = sklearn.metrics.accuracy_score(label, pred)
-            accs = np.append(accs, acc)
-            auc = sklearn.metrics.roc_auc_score(label, pred)
-            aucs = np.append(aucs, auc)
-            ap = sklearn.metrics.average_precision_score(label, pred)
-            aps = np.append(aps, ap)
-            time_elapsed = time_end - time_start
-            times_elapsed = np.append(times_elapsed, time_elapsed)
-            pbar.set_postfix_str('acc: {:.3f}, auc: {:.3f}, ap: {:.3f}, elapsed_time: {:.3f}s'.format(
-                np.average(accs), np.average(aucs), np.average(aps), time_elapsed))
+    for pred, time_elapsed in preds_and_times_elapsed:
+        preds.append(pred)
+        times_elapsed = np.append(times_elapsed, time_elapsed)
+    for pred, label in zip(preds, labels):
+        acc = sklearn.metrics.accuracy_score(label, pred)
+        accs = np.append(accs, acc)
+        auc = sklearn.metrics.roc_auc_score(label, pred)
+        aucs = np.append(aucs, auc)
+        ap = sklearn.metrics.average_precision_score(label, pred)
+        aps = np.append(aps, ap)
     return np.average(accs), np.average(aucs), np.average(aps), np.sum(times_elapsed), np.average(times_elapsed)
 
 
-def test(g, model):
+def test_wrapper(args):
+    g, model = args
+    with Pool(1) as p:
+        pred, time_elapsed = p.map(test, [[g, model]])[0]
+    return pred, time_elapsed
+
+
+def test(args):
+    g, model = args
+    time_start = time()
     feats = g.ndata['feats']
     logits = model(g, feats)
     pred = logits.argmax(1)
-    return pred
+    time_end = time()
+    time_elapsed = time_end - time_start
+    return pred, time_elapsed
 
 
 def test_test(dataset, model, labels):
@@ -217,23 +267,40 @@ def test_test(dataset, model, labels):
     accs = np.array([])
     aucs = np.array([])
     aps = np.array([])
+    preds_and_times_elapsed = process_map(
+        test_wrapper, [(g, model) for g in test_dataset], max_workers=os.cpu_count()+1)
+    preds = []
     times_elapsed = np.array([])
-    with tqdm(test_dataset) as pbar:
-        for g, label in zip(pbar, labels):
-            time_start = time()
-            pred = test(g, model)
-            time_end = time()
-            acc = sklearn.metrics.accuracy_score(label, pred)
-            accs = np.append(accs, acc)
-            auc = sklearn.metrics.roc_auc_score(label, pred)
-            aucs = np.append(aucs, auc)
-            ap = sklearn.metrics.average_precision_score(label, pred)
-            aps = np.append(aps, ap)
-            time_elapsed = time_end - time_start
-            times_elapsed = np.append(times_elapsed, time_elapsed)
-            pbar.set_postfix_str('acc: {:.3f}, auc: {:.3f}, ap: {:.3f}, elapsed_time: {:.3f}s'.format(
-                np.average(accs), np.average(aucs), np.average(aps), time_elapsed))
+    for pred, time_elapsed in preds_and_times_elapsed:
+        preds.append(pred)
+        times_elapsed = np.append(times_elapsed, time_elapsed)
+    for pred, label in zip(preds, labels):
+        acc = sklearn.metrics.accuracy_score(label, pred)
+        accs = np.append(accs, acc)
+        auc = sklearn.metrics.roc_auc_score(label, pred)
+        aucs = np.append(aucs, auc)
+        ap = sklearn.metrics.average_precision_score(label, pred)
+        aps = np.append(aps, ap)
     return np.average(accs), np.average(aucs), np.average(aps), np.sum(times_elapsed), np.average(times_elapsed)
+
+
+def savefig_min_cover_wrapper(args):
+    g, min_cover, path = args
+    with Pool(1) as p:
+        p.map(savefig_min_cover, [[g, min_cover, path]])
+
+
+def savefig_min_cover(args):
+    g, min_cover, path = args
+    pos = nx.circular_layout(g)
+    node_color = ['#333333'] * g.number_of_nodes()
+    for node in range(g.number_of_nodes()):
+        if min_cover[node]:
+            node_color[node] = '#009b9f'
+    nx.draw_networkx(g, pos, node_color=node_color, font_color='#ffffff')
+    plt.tight_layout()
+    plt.savefig(path, dpi=300, pil_kwargs={'quality': 85})
+    plt.close()
 
 
 if __name__ == '__main__':
