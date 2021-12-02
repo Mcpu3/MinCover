@@ -16,25 +16,25 @@ def main(mode):
 
 def make_dataset():
     os.makedirs('./dataset', exist_ok=True)
-    os.makedirs('./fig/A', exist_ok=True)
+    os.makedirs('./figures/A', exist_ok=True)
 
 
 def train():
-    os.makedirs('./fig/A_tilda', exist_ok=True)
+    os.makedirs('./figures/A_tilda', exist_ok=True)
     os.makedirs('./models', exist_ok=True)
 
 
 def clean_make_dataset():
     try:
         rmtree('./dataset', ignore_errors=True)
-        rmtree('./fig/A', ignore_errors=True)
+        rmtree('./figures/A', ignore_errors=True)
     except:
         pass
 
 
 def clean_train():
     try:
-        rmtree('./fig/A_tilda', ignore_errors=True)
+        rmtree('./figures/A_tilda', ignore_errors=True)
         rmtree('./models', ignore_errors=True)
         rmtree('./runs', ignore_errors=True)
     except:
@@ -42,7 +42,8 @@ def clean_train():
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser()
-    parser.add_argument('--mode')
-    args = parser.parse_args()
-    main(args.mode)
+    argument_parser = ArgumentParser()
+    argument_parser.add_argument('--mode')
+    arguments = argument_parser.parse_args()
+    mode = arguments.mode
+    main(mode)

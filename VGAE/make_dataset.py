@@ -1,63 +1,51 @@
+from argparse import ArgumentParser
 import os
-from multiprocessing import Pool, freeze_support
 import random
-import matplotlib.pyplot as plt
+
 import networkx as nx
 import pandas
-from tqdm.contrib.concurrent import process_map
 from tqdm import tqdm
 
 
-def main():
-    n_gs = 2
-    gs = []
-    for g_id in tqdm(range(n_gs)):
-        n = 256
-        p = min(max(random.random(), 0.1), 0.9)
-        g = nx.fast_gnp_random_graph(n, p)
-        d_nodes = {'g_id': [], 'nodes': []}
-        d_nodes['g_id'] = [g_id] * g.number_of_nodes()
-        d_nodes['nodes'] = [node for node in range(g.number_of_nodes())]
+def main(number_of_graphs, number_of_nodes, p_min, p_max, path):
+    for graph_id in tqdm(range(number_of_graphs)):
+        p = min(max(random.random(), p_min), p_max)
+        graph = nx.fast_gnp_random_graph(number_of_nodes, p)
+        d_nodes = {'graph_id': [], 'nodes': []}
+        d_nodes['graph_id'] = [graph_id] * graph.number_of_nodes()
+        d_nodes['nodes'] = [node for node in range(graph.number_of_nodes())]
         df_nodes = pandas.DataFrame(d_nodes)
-        if g_id == 0:
-            df_nodes.to_csv('./dataset/nodes.csv', index=False)
+        if graph_id == 0:
+            df_nodes.to_csv(os.path.join(path, 'dataset/nodes.csv'), index=False)
         else:
-            df_nodes.to_csv('./dataset/nodes.csv',
+            df_nodes.to_csv(os.path.join(path, 'dataset/nodes.csv'),
                             header=False, index=False, mode='a')
-        d_edges = {'g_id': [], 'src': [], 'dst': []}
-        d_edges['g_id'] = [g_id] * (g.number_of_edges() * 2)
-        for edge in g.edges():
-            d_edges['src'].append(edge[0])
-            d_edges['dst'].append(edge[1])
-            d_edges['src'].append(edge[1])
-            d_edges['dst'].append(edge[0])
+        d_edges = {'graph_id': [], 'sources': [], 'destinations': []}
+        d_edges['graph_id'] = [graph_id] * (graph.number_of_edges() * 2)
+        for edge in graph.edges():
+            d_edges['sources'].append(edge[0])
+            d_edges['destinations'].append(edge[1])
+            d_edges['sources'].append(edge[1])
+            d_edges['destinations'].append(edge[0])
         df_edges = pandas.DataFrame(d_edges)
-        if g_id == 0:
-            df_edges.to_csv('./dataset/edges.csv', index=False)
+        if graph_id == 0:
+            df_edges.to_csv(os.path.join(path, 'dataset/edges.csv'), index=False)
         else:
-            df_edges.to_csv('./dataset/edges.csv',
+            df_edges.to_csv(os.path.join(path, 'dataset/edges.csv'),
                             header=False, index=False, mode='a')
-        gs.append(g)
-    process_map(savefig_A_wrapper, [(g, './fig/A/{}.jpg'.format(g_id))
-                for g, g_id in zip(gs, range(n_gs))], max_workers=os.cpu_count()+1)
-
-
-def savefig_A_wrapper(args):
-    g, path = args
-    with Pool(1) as p:
-        p.map(savefig_A, [[g, path]])
-
-
-def savefig_A(args):
-    g, path = args
-    pos = nx.circular_layout(g)
-    node_color = ['#333333'] * g.number_of_nodes()
-    nx.draw_networkx(g, pos, node_color=node_color, font_color='#ffffff')
-    plt.tight_layout()
-    plt.savefig(path, dpi=300, pil_kwargs={'quality': 85})
-    plt.close()
 
 
 if __name__ == '__main__':
-    freeze_support()
-    main()
+    argument_parser = ArgumentParser()
+    argument_parser.add_argument('--number_of_graphs', type=int, default=2)
+    argument_parser.add_argument('--number_of_nodes', type=int, default=16)
+    argument_parser.add_argument('--p_min', type=float, default=0.1)
+    argument_parser.add_argument('--p_max', type=float, default=0.9)
+    argument_parser.add_argument('--path', default='')
+    arguments = argument_parser.parse_args()
+    number_of_graphs = arguments.number_of_graphs
+    number_of_nodes = arguments.number_of_nodes
+    p_min = arguments.p_min
+    p_max = arguments.p_max
+    path = os.path.join('./runs/', arguments.path)
+    main(number_of_graphs, number_of_nodes, p_min, p_max, path)

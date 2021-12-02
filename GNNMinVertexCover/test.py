@@ -1,303 +1,223 @@
+from argparse import ArgumentParser
 import os
 from multiprocessing import Pool, freeze_support
 import sys
 from time import time
 
 import dgl
-from dgl.data import DGLDataset
-from dgl.nn import GraphConv
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import pandas as pd
 import sklearn.metrics
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from tqdm.contrib.concurrent import process_map
 
+from GNNMinVertexCover.dataset import Dataset
+from gcn import GCN
 
-def main():
-    dataset = MinVertexCoverDataset()
-    test_dataset = dataset[dataset.n_train:]
-    gs = []
+
+def main(number_of_features, path):
+    dataset = Dataset(number_of_features, path)
+    test_dataset = dataset[dataset.number_of_train:]
+    graphs = []
     labels = []
-    for g in test_dataset:
-        labels.append(g.ndata['labels'])
-        g = dgl.remove_self_loop(g)
-        g = dgl.to_networkx(g)
-        g = nx.Graph(g)
-        gs.append(g)
-    acc, auc, ap, sum, avg = test_min_cover(gs, labels)
+    for graph in test_dataset:
+        labels.append(graph.ndata['labels'])
+        graph = dgl.remove_self_loop(graph)
+        graph = dgl.to_networkx(graph)
+        graph = nx.Graph(graph)
+        graphs.append(graph)
+    acc, auc, ap, sum, mean = test_min_cover(graphs, labels)
     print('Min Cover:')
-    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Avg: {:.3f}s'.format(
-        acc, auc, ap, sum, avg))
-    acc, auc, ap, sum, avg = test_approx_min_cover(gs, labels)
+    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Mean: {:.3f}s'.format(
+        acc, auc, ap, sum, mean))
+    acc, auc, ap, sum, mean = test_approx_min_cover(graphs, labels)
     print('Approx Min Cover:')
-    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Avg: {:.3f}s'.format(
-        acc, auc, ap, sum, avg))
-    model = GCN(dataset.n_feats, [16, 8, 4], dataset.n_classes)
-    model.load_state_dict(torch.load('./models/model.pth'))
+    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Mean: {:.3f}s'.format(
+        acc, auc, ap, sum, mean))
+    model = GCN(dataset.number_of_features, dataset.number_of_classes)
+    model.load_state_dict(torch.load(os.path.join(path, 'model.pth')))
     model.eval()
-    acc, auc, ap, sum, avg = test_test(dataset, model, labels)
+    acc, auc, ap, sum, mean = test_test(test_dataset, model, labels)
     print('Test:')
-    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Avg: {:.3f}s'.format(
-        acc, auc, ap, sum, avg))
-    preds_and_times_elapsed = process_map(
-        min_cover_wrapper, [(g,) for g in gs], max_workers=os.cpu_count()+1)
-    preds = []
-    for pred , _ in preds_and_times_elapsed:
-        preds.append(pred)
-    process_map(savefig_min_cover_wrapper, [(g, pred, './fig/min_covers/{}.jpg'.format(dataset.n_train + g_index))
-                for g, pred, g_index in zip(gs, preds, range(len(gs)))], max_workers=os.cpu_count()+1)
-    preds_and_times_elapsed = process_map(
-        approx_min_cover_wrapper, [(g,) for g in gs], max_workers=os.cpu_count()+1)
-    preds = []
-    for pred , _ in preds_and_times_elapsed:
-        preds.append(pred)
-    process_map(savefig_min_cover_wrapper, [(g, pred, './fig/approx_min_covers/{}.jpg'.format(dataset.n_train + g_index))
-                for g, pred, g_index in zip(gs, preds, range(len(gs)))], max_workers=os.cpu_count()+1)
-    preds_and_times_elapsed = process_map(
-        test_wrapper, [(g, model) for g in test_dataset], max_workers=os.cpu_count()+1)
-    preds = []
-    for pred , _ in preds_and_times_elapsed:
-        preds.append(pred)
-    process_map(savefig_min_cover_wrapper, [(g, pred, './fig/tests/{}.jpg'.format(dataset.n_train + g_index))
-                for g, pred, g_index in zip(gs, preds, range(len(gs)))], max_workers=os.cpu_count()+1)
+    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Mean: {:.3f}s'.format(
+        acc, auc, ap, sum, mean))
+    predicts_and_times_elapsed = process_map(
+        min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
+    predicts = []
+    for predict, _ in predicts_and_times_elapsed:
+        predicts.append(predict)
+    process_map(savefigure_min_cover_wrapper, [(graph, predict, os.path.join(path, 'figures/min_covers/{}.jpg'.format(dataset.number_of_train + index)))
+                for index, (graph, predict) in enumerate(zip(graphs, predicts))], max_workers=os.cpu_count()+1)
+    predicts_and_times_elapsed = process_map(
+        approx_min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
+    predicts = []
+    for predict, _ in predicts_and_times_elapsed:
+        predicts.append(predict)
+    process_map(savefigure_min_cover_wrapper, [(graph, predict, os.path.join(path, 'figures/approx_min_covers/{}.jpg'.format(dataset.number_of_train + index)))
+                for index, (graph, predict) in enumerate(zip(graphs, predicts))], max_workers=os.cpu_count()+1)
+    predicts_and_times_elapsed = process_map(
+        test_wrapper, [(graph, model) for graph in test_dataset], max_workers=os.cpu_count()+1)
+    predicts = []
+    for predict, _ in predicts_and_times_elapsed:
+        predicts.append(predict)
+    process_map(savefigure_min_cover_wrapper, [(graph, predict, os.path.join(path, 'figures/tests/{}.jpg'.format(dataset.number_of_train + index)))
+                for index, (graph, predict) in enumerate(zip(graphs, predicts))], max_workers=os.cpu_count()+1)
 
 
-class MinVertexCoverDataset(DGLDataset):
-    def __init__(self):
-        super().__init__(name='min_vertex_cover')
-
-    def process(self):
-        self.n_classes = 2
-        self.n_feats = 32
-        self.gs = []
-        nodes = pd.read_csv('./dataset/nodes.csv')
-        edges = pd.read_csv('./dataset/edges.csv')
-        nodes_group = nodes.groupby('g_id')
-        edges_group = edges.groupby('g_id')
-        n_nodes_dict = {}
-        labels_dict = {}
-        for g_id in nodes_group.groups:
-            nodes_of_id = nodes_group.get_group(g_id)
-            n_nodes = nodes_of_id.to_numpy().shape[0]
-            labels = torch.from_numpy(nodes_of_id['labels'].to_numpy())
-            n_nodes_dict[g_id] = n_nodes
-            labels_dict[g_id] = labels
-        for g_id in nodes_group.groups:
-            src = torch.empty(0, dtype=torch.int64)
-            dst = torch.empty(0, dtype=torch.int64)
-            if g_id in edges_group.groups.keys():
-                edges_of_id = edges_group.get_group(g_id)
-                src = torch.from_numpy(edges_of_id['src'].to_numpy())
-                dst = torch.from_numpy(edges_of_id['dst'].to_numpy())
-            n_nodes = n_nodes_dict[g_id]
-            labels = labels_dict[g_id]
-            g = dgl.graph((src, dst), num_nodes=n_nodes)
-            g = dgl.add_self_loop(g)
-            feats = torch.rand([n_nodes, self.n_feats], dtype=torch.float32)
-            g.ndata['feats'] = feats
-            g.ndata['labels'] = labels
-            self.gs.append(g)
-        n_gs = len(self.gs)
-        n_train = int(n_gs * 0.8)
-        self.n_train = n_train
-
-    def __getitem__(self, i):
-        return self.gs[i]
-
-    def __len__(self):
-        return len(self.gs)
+def min_cover_wrapper(arguments):
+    graph = arguments[0]
+    with Pool(1) as pool:
+        predict, time_elapsed = pool.map(min_cover, [[graph]])[0]
+    return predict, time_elapsed
 
 
-class GCN(nn.Module):
-    def __init__(self, n_feats, n_hidden_feats, n_classes):
-        super(GCN, self).__init__()
-        self.n_hiddens = [2, 2, 2]
-        self.hiddens = []
-        self.biases = []
-        self.hiddens.append(GraphConv(n_feats, n_hidden_feats[0]))
-        self.biases.append(nn.Parameter(torch.zeros(1)))
-        for hidden_ind, n_hidden in enumerate(self.n_hiddens):
-            for _ in range(n_hidden):
-                self.hiddens.append(
-                    GraphConv(n_hidden_feats[hidden_ind], n_hidden_feats[hidden_ind]))
-                self.biases.append(nn.Parameter(torch.zeros(1)))
-            if hidden_ind < len(self.n_hiddens) - 1:
-                self.hiddens.append(
-                    GraphConv(n_hidden_feats[hidden_ind], n_hidden_feats[hidden_ind + 1]))
-                self.biases.append(nn.Parameter(torch.zeros(1)))
-        self.hiddens.append(GraphConv(n_hidden_feats[-1], n_classes))
-        self.biases.append(nn.Parameter(torch.zeros(1)))
-        self.hiddens = nn.ModuleList(self.hiddens)
-        self.biases = nn.ParameterList(self.biases)
-
-    def forward(self, g, feats):
-        h = feats
-        for hidden_ind, hidden in enumerate(self.hiddens):
-            h = hidden(g, h)
-            h = F.relu(h + self.biases[hidden_ind])
-        h = F.softmax(h, dim=1)
-        return h
-
-
-def min_cover_wrapper(args):
-    g = args[0]
-    with Pool(1) as p:
-        pred, time_elapsed = p.map(min_cover, [[g]])[0]
-    return pred, time_elapsed
-
-
-def min_cover(args):
-    g = args[0]
+def min_cover(arguments):
+    graph = arguments[0]
     time_start = time()
     min_cover = set()
     min_weight = sys.maxsize
-    for i in range(2 ** g.number_of_nodes()):
+    for i in range(2 ** graph.number_of_nodes()):
         nodes = set()
         edges = set()
-        for j in range(g.number_of_nodes()):
+        for j in range(graph.number_of_nodes()):
             if (i >> j) & 1:
                 nodes.add(j)
-                for k in g.adj[j]:
+                for k in graph.adj[j]:
                     if j < k:
                         edges.add((j, k))
                     else:
                         edges.add((k, j))
-        if edges == set(g.edges()):
+        if edges == set(graph.edges()):
             if len(nodes) < min_weight:
                 min_cover = nodes
                 min_weight = len(nodes)
     min_cover = np.array(list(min_cover))
-    pred = np.array([0 for _ in range(g.number_of_nodes())])
+    predict = np.array([0 for _ in range(graph.number_of_nodes())])
     for node in min_cover:
-        pred[node] = 1
-    pred = torch.tensor(pred, dtype=torch.int64)
+        predict[node] = 1
+    predict = torch.tensor(predict, dtype=torch.int64)
     time_end = time()
     time_elapsed = time_end - time_start
-    return pred, time_elapsed
+    return predict, time_elapsed
 
 
-def test_min_cover(gs, labels):
+def test_min_cover(graphs, labels):
     accs = np.array([])
     aucs = np.array([])
     aps = np.array([])
-    preds_and_times_elapsed = process_map(
-        min_cover_wrapper, [(g,) for g in gs], max_workers=os.cpu_count()+1)
-    preds = []
+    predicts_and_times_elapsed = process_map(
+        min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
+    predicts = []
     times_elapsed = np.array([])
-    for pred, time_elapsed in preds_and_times_elapsed:
-        preds.append(pred)
+    for predict, time_elapsed in predicts_and_times_elapsed:
+        predicts.append(predict)
         times_elapsed = np.append(times_elapsed, time_elapsed)
-    for pred, label in zip(preds, labels):
-        acc = sklearn.metrics.accuracy_score(label, pred)
+    for predict, label in zip(predicts, labels):
+        acc = sklearn.metrics.accuracy_score(label, predict)
         accs = np.append(accs, acc)
-        auc = sklearn.metrics.roc_auc_score(label, pred)
+        auc = sklearn.metrics.roc_auc_score(label, predict)
         aucs = np.append(aucs, auc)
-        ap = sklearn.metrics.average_precision_score(label, pred)
+        ap = sklearn.metrics.average_precision_score(label, predict)
         aps = np.append(aps, ap)
-    return np.average(accs), np.average(aucs), np.average(aps), np.sum(times_elapsed), np.average(times_elapsed)
+    return np.mean(accs), np.mean(aucs), np.mean(aps), np.sum(times_elapsed), np.mean(times_elapsed)
 
 
-def approx_min_cover_wrapper(args):
-    g = args[0]
-    with Pool(1) as p:
-        pred, time_elapsed = p.map(approx_min_cover, [[g]])[0]
-    return pred, time_elapsed
+def approx_min_cover_wrapper(arguments):
+    graph = arguments[0]
+    with Pool(1) as pool:
+        predict, time_elapsed = pool.map(approx_min_cover, [[graph]])[0]
+    return predict, time_elapsed
 
 
-def approx_min_cover(args):
-    g = args[0]
+def approx_min_cover(arguments):
+    graph = arguments[0]
     time_start = time()
-    min_cover = nx.algorithms.approximation.min_weighted_vertex_cover(g)
+    min_cover = nx.algorithms.approximation.min_weighted_vertex_cover(graph)
     min_cover = np.array(list(min_cover))
-    pred = np.array([0 for _ in range(g.number_of_nodes())])
+    predict = np.array([0 for _ in range(graph.number_of_nodes())])
     for node in min_cover:
-        pred[node] = 1
-    pred = torch.tensor(pred, dtype=torch.int64)
+        predict[node] = 1
+    predict = torch.tensor(predict, dtype=torch.int64)
     time_end = time()
     time_elapsed = time_end - time_start
-    return pred, time_elapsed
+    return predict, time_elapsed
 
 
-def test_approx_min_cover(gs, labels):
+def test_approx_min_cover(graphs, labels):
     accs = np.array([])
     aucs = np.array([])
     aps = np.array([])
-    preds_and_times_elapsed = process_map(
-        approx_min_cover_wrapper, [(g,) for g in gs], max_workers=os.cpu_count()+1)
-    preds = []
+    predicts_and_times_elapsed = process_map(
+        approx_min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
+    predicts = []
     times_elapsed = np.array([])
-    for pred, time_elapsed in preds_and_times_elapsed:
-        preds.append(pred)
+    for predict, time_elapsed in predicts_and_times_elapsed:
+        predicts.append(predict)
         times_elapsed = np.append(times_elapsed, time_elapsed)
-    for pred, label in zip(preds, labels):
-        acc = sklearn.metrics.accuracy_score(label, pred)
+    for predict, label in zip(predicts, labels):
+        acc = sklearn.metrics.accuracy_score(label, predict)
         accs = np.append(accs, acc)
-        auc = sklearn.metrics.roc_auc_score(label, pred)
+        auc = sklearn.metrics.roc_auc_score(label, predict)
         aucs = np.append(aucs, auc)
-        ap = sklearn.metrics.average_precision_score(label, pred)
+        ap = sklearn.metrics.average_precision_score(label, predict)
         aps = np.append(aps, ap)
-    return np.average(accs), np.average(aucs), np.average(aps), np.sum(times_elapsed), np.average(times_elapsed)
+    return np.mean(accs), np.mean(aucs), np.mean(aps), np.sum(times_elapsed), np.mean(times_elapsed)
 
 
-def test_wrapper(args):
-    g, model = args
-    with Pool(1) as p:
-        pred, time_elapsed = p.map(test, [[g, model]])[0]
-    return pred, time_elapsed
+def test_wrapper(arguments):
+    graph, model = arguments
+    with Pool(1) as pool:
+        predict, time_elapsed = pool.map(test, [[graph, model]])[0]
+    return predict, time_elapsed
 
 
-def test(args):
-    g, model = args
+def test(arguments):
+    graph, model = arguments
     time_start = time()
-    feats = g.ndata['feats']
-    logits = model(g, feats)
-    pred = logits.argmax(1)
+    features = graph.ndata['features']
+    predict = model(graph, features).argmax(1)
     time_end = time()
     time_elapsed = time_end - time_start
-    return pred, time_elapsed
+    return predict, time_elapsed
 
 
 def test_test(dataset, model, labels):
-    n_train = dataset.n_train
-    test_dataset = dataset[n_train:]
     accs = np.array([])
     aucs = np.array([])
     aps = np.array([])
-    preds_and_times_elapsed = process_map(
-        test_wrapper, [(g, model) for g in test_dataset], max_workers=os.cpu_count()+1)
-    preds = []
+    predicts_and_times_elapsed = process_map(
+        test_wrapper, [(graph, model) for graph in dataset], max_workers=os.cpu_count()+1)
+    predicts = []
     times_elapsed = np.array([])
-    for pred, time_elapsed in preds_and_times_elapsed:
-        preds.append(pred)
+    for predict, time_elapsed in predicts_and_times_elapsed:
+        predicts.append(predict)
         times_elapsed = np.append(times_elapsed, time_elapsed)
-    for pred, label in zip(preds, labels):
-        acc = sklearn.metrics.accuracy_score(label, pred)
+    for predict, label in zip(predicts, labels):
+        acc = sklearn.metrics.accuracy_score(label, predict)
         accs = np.append(accs, acc)
-        auc = sklearn.metrics.roc_auc_score(label, pred)
+        auc = sklearn.metrics.roc_auc_score(label, predict)
         aucs = np.append(aucs, auc)
-        ap = sklearn.metrics.average_precision_score(label, pred)
+        ap = sklearn.metrics.average_precision_score(label, predict)
         aps = np.append(aps, ap)
-    return np.average(accs), np.average(aucs), np.average(aps), np.sum(times_elapsed), np.average(times_elapsed)
+    return np.mean(accs), np.mean(aucs), np.mean(aps), np.sum(times_elapsed), np.mean(times_elapsed)
 
 
-def savefig_min_cover_wrapper(args):
-    g, min_cover, path = args
-    with Pool(1) as p:
-        p.map(savefig_min_cover, [[g, min_cover, path]])
+def savefigure_min_cover_wrapper(arguments):
+    graph, min_cover, path = arguments
+    with Pool(1) as pool:
+        pool.map(savefigure_min_cover, [[graph, min_cover, path]])
 
 
-def savefig_min_cover(args):
-    g, min_cover, path = args
-    pos = nx.circular_layout(g)
-    node_color = ['#333333'] * g.number_of_nodes()
-    for node in range(g.number_of_nodes()):
+def savefigure_min_cover(arguments):
+    graph, min_cover, path = arguments
+    position = nx.circular_layout(graph)
+    nodes_color = ['#333333'] * graph.number_of_nodes()
+    for node in range(graph.number_of_nodes()):
         if min_cover[node]:
-            node_color[node] = '#009b9f'
-    nx.draw_networkx(g, pos, node_color=node_color, font_color='#ffffff')
+            nodes_color[node] = '#009b9f'
+    nx.draw_networkx(graph, position, node_color=nodes_color,
+                     font_color='#ffffff')
     plt.tight_layout()
     plt.savefig(path, dpi=300, pil_kwargs={'quality': 85})
     plt.close()
@@ -305,4 +225,10 @@ def savefig_min_cover(args):
 
 if __name__ == '__main__':
     freeze_support()
-    main()
+    argument_parser = ArgumentParser()
+    argument_parser.add_argument('--number_of_features', type=int, default=32)
+    argument_parser.add_argument('--path', default='')
+    arguments = argument_parser.parse_args()
+    number_of_features = arguments.number_of_features
+    path = os.path.join('./runs/', arguments.path)
+    main(number_of_features, path)
