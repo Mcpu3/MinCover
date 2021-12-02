@@ -47,8 +47,7 @@ def train(dataset, model, epochs, path):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    pbar.set_postfix_str(
-                        'epoch: {}, loss: {:.3f}, acc: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, np.average(losses), np.average(accs), np.average(aucs), np.average(aps)))
+                    pbar.set_postfix_str('epoch: {}, loss: {:.3f}, acc: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, np.average(losses), np.average(accs), np.average(aucs), np.average(aps)))
             summary_writer.add_scalar('Loss/train', np.average(losses), epoch)
             summary_writer.add_scalar('Acc/train', np.average(accs), epoch)
             summary_writer.add_scalar('AUC/train', np.average(aucs), epoch)
@@ -60,7 +59,7 @@ if __name__ == '__main__':
     argument_parser = ArgumentParser()
     argument_parser.add_argument('--number_of_features', type=int, default=32)
     argument_parser.add_argument('--epochs', type=int, default=64)
-    argument_parser.add_argument('--path', default='')
+    argument_parser.add_argument('--path', required=True)
     arguments = argument_parser.parse_args()
     number_of_features = arguments.number_of_features
     epochs = arguments.epochs

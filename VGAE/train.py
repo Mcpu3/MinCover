@@ -32,8 +32,7 @@ def train(dataset, model, epochs, path):
                     mu, logstd = model.encoder(x, edge_index)
                     z = model.encode(x, edge_index)
                     neg_edge_index = negative_sampling(edge_index, z.size(0))
-                    loss = model.recon_loss(z, edge_index, neg_edge_index) + \
-                        model.kl_loss(mu, logstd)
+                    loss = model.recon_loss(z, edge_index, neg_edge_index) + model.kl_loss(mu, logstd)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
@@ -42,8 +41,7 @@ def train(dataset, model, epochs, path):
                     model.train()
                     aucs = np.append(aucs, auc)
                     aps = np.append(aps, ap)
-                    pbar.set_postfix_str(
-                        'epoch: {}, loss: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, loss, np.average(aucs), np.average(aps)))
+                    pbar.set_postfix_str('epoch: {}, loss: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, loss, np.average(aucs), np.average(aps)))
             writer.add_scalar('Loss/train', loss, epoch)
             writer.add_scalar('AUC/train', np.average(aucs), epoch)
             writer.add_scalar('AP/train', np.average(aps), epoch)
@@ -51,8 +49,7 @@ def train(dataset, model, epochs, path):
 
 
 def negative_sampling(edge_index, number_of_nodes):
-    adjacency = [[False for _ in range(number_of_nodes)]
-                 for _ in range(number_of_nodes)]
+    adjacency = [[False for _ in range(number_of_nodes)] for _ in range(number_of_nodes)]
     for i in range(number_of_nodes):
         adjacency[i][i] = True
     for i in range(min(len(edge_index[0]), len(edge_index[1]))):
@@ -75,7 +72,7 @@ if __name__ == '__main__':
     argument_parser.add_argument('--number_of_features', type=int, default=32)
     argument_parser.add_argument('--number_of_classes', type=int, default=16)
     argument_parser.add_argument('--epochs', type=int, default=64)
-    argument_parser.add_argument('--path', default='')
+    argument_parser.add_argument('--path', required=True)
     arguments = argument_parser.parse_args()
     number_of_features = arguments.number_of_features
     number_of_classes = arguments.number_of_classes

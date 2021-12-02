@@ -18,8 +18,7 @@ def main(number_of_graphs, number_of_nodes, p_min, p_max, path):
         if graph_id == 0:
             df_nodes.to_csv(os.path.join(path, 'dataset/nodes.csv'), index=False)
         else:
-            df_nodes.to_csv(os.path.join(path, 'dataset/nodes.csv'),
-                            header=False, index=False, mode='a')
+            df_nodes.to_csv(os.path.join(path, 'dataset/nodes.csv'), header=False, index=False, mode='a')
         d_edges = {'graph_id': [], 'sources': [], 'destinations': []}
         d_edges['graph_id'] = [graph_id] * (graph.number_of_edges() * 2)
         for edge in graph.edges():
@@ -31,8 +30,7 @@ def main(number_of_graphs, number_of_nodes, p_min, p_max, path):
         if graph_id == 0:
             df_edges.to_csv(os.path.join(path, 'dataset/edges.csv'), index=False)
         else:
-            df_edges.to_csv(os.path.join(path, 'dataset/edges.csv'),
-                            header=False, index=False, mode='a')
+            df_edges.to_csv(os.path.join(path, 'dataset/edges.csv'), header=False, index=False, mode='a')
 
 
 if __name__ == '__main__':
@@ -41,7 +39,7 @@ if __name__ == '__main__':
     argument_parser.add_argument('--number_of_nodes', type=int, default=16)
     argument_parser.add_argument('--p_min', type=float, default=0.1)
     argument_parser.add_argument('--p_max', type=float, default=0.9)
-    argument_parser.add_argument('--path', default='')
+    argument_parser.add_argument('--path', required=True)
     arguments = argument_parser.parse_args()
     number_of_graphs = arguments.number_of_graphs
     number_of_nodes = arguments.number_of_nodes

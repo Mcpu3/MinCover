@@ -1,64 +1,65 @@
 from argparse import ArgumentParser
 import os
-from shutil import rmtree
 
 
-def main(mode):
-    if mode == 'make_dataset':
-        make_dataset()
-    elif mode == 'train':
-        train()
-    elif mode == 'test':
-        test()
-    elif mode == 'clean_make_dataset':
-        clean_make_dataset()
-    elif mode == 'clean_train':
-        clean_train()
-    elif mode == 'clean_test':
-        clean_test()
+def main(clean, path):
+    if not clean:
+        os.mkdir(path)
+        make_dataset(path)
+        train(path)
+        test(path)
+    else:
+        clean_make_dataset(path)
+        clean_train(path)
+        clean_test(path)
+        os.rmdir(path)
 
 
-def make_dataset():
-    os.makedirs('./dataset', exist_ok=True)
+def make_dataset(path):
+    os.mkdir(os.path.join(path, 'dataset/'))
 
 
-def train():
-    os.makedirs('./models', exist_ok=True)
+def train(path):
+    os.mkdir(os.path.join(path, 'runs/'))
 
 
-def test():
-    os.makedirs('./figures/min_covers', exist_ok=True)
-    os.makedirs('./figures/approx_min_covers', exist_ok=True)
-    os.makedirs('./figures/tests', exist_ok=True)
+def test(path):
+    os.mkdir(os.path.join(path, 'figures/'))
+    os.mkdir(os.path.join(path, 'figures/min_covers/'))
+    os.mkdir(os.path.join(path, 'figures/approx_min_covers/'))
+    os.mkdir(os.path.join(path, 'figures/tests/'))
 
 
-def clean_make_dataset():
-    try:
-        rmtree('./dataset', ignore_errors=True)
-    except:
-        pass
+def clean_make_dataset(path):
+    for dir in os.listdir(os.path.join(path, 'dataset/')):
+        os.remove(os.path.join(os.path.join(path, 'dataset/'), dir))
+    os.rmdir(os.path.join(path, 'dataset/'))
 
 
-def clean_train():
-    try:
-        rmtree('./models', ignore_errors=True)
-        rmtree('./runs', ignore_errors=True)
-    except:
-        pass
+def clean_train(path):
+    for dir in os.listdir(os.path.join(path, 'runs/')):
+        os.remove(os.path.join(os.path.join(path, 'runs/'), dir))
+    os.rmdir(os.path.join(path, 'runs/'))
 
 
-def clean_test():
-    try:
-        rmtree('./figures/min_covers', ignore_errors=True)
-        rmtree('./figures/approx_min_covers', ignore_errors=True)
-        rmtree('./figures/tests', ignore_errors=True)
-    except:
-        pass
+def clean_test(path):
+    for dir in os.listdir(os.path.join(path, 'figures/min_covers/')):
+        os.remove(os.path.join(os.path.join(path, 'figures/min_covers/'), dir))
+    for dir in os.listdir(os.path.join(path, 'figures/approx_min_covers/')):
+        os.remove(os.path.join(os.path.join(path, 'figures/approx_min_covers/'), dir))
+    for dir in os.listdir(os.path.join(path, 'figures/tests/')):
+        os.remove(os.path.join(os.path.join(path, 'figures/tests/'), dir))
+    os.rmdir(os.path.join(path, 'figures/min_covers/'))
+    os.rmdir(os.path.join(path, 'figures/approx_min_covers/'))
+    os.rmdir(os.path.join(path, 'figures/tests/'))
+    os.rmdir(os.path.join(path, 'figures/'))
 
 
 if __name__ == '__main__':
     argument_parser = ArgumentParser()
-    argument_parser.add_argument('--mode')
+    argument_parser.add_argument('--clean', action='store_true')
+    argument_parser.add_argument('--path', required=True)
     arguments = argument_parser.parse_args()
-    mode = arguments.mode
-    main(mode)
+    clean = arguments.clean
+    path = os.path.join('./runs/', arguments.path)
+    main(clean, path)

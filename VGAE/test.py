@@ -28,8 +28,7 @@ def main(number_of_features, number_of_classes, path):
         graph = dgl.to_networkx(graph)
         graph = nx.Graph(graph)
         graphs.append(graph)
-    process_map(savefigure_A_wrapper, [(graph, os.path.join(path, 'figures/A/{}.jpg'.format(dataset.number_of_train + index)))
-                for index, graph in enumerate(graphs)], max_workers=os.cpu_count()+1)
+    process_map(savefigure_A_wrapper, [(graph, os.path.join(path, 'figures/A/{}.jpg'.format(dataset.number_of_train + index))) for index, graph in enumerate(graphs)], max_workers=os.cpu_count()+1)
 
 
 def test(dataset, model):
@@ -42,13 +41,11 @@ def test(dataset, model):
         auc, ap = model.test(z, edge_index, negative_edge_index)
         aucs = np.append(aucs, auc)
         aps = np.append(aps, ap)
-    print('Test AUC: {:.3f}, AP: {:.3f}'.format(
-        np.average(aucs), np.average(aps)))
+    print('Test AUC: {:.3f}, AP: {:.3f}'.format(np.average(aucs), np.average(aps)))
 
 
 def negative_sampling(edge_index, number_of_nodes):
-    adjacency = [[False for _ in range(number_of_nodes)]
-                 for _ in range(number_of_nodes)]
+    adjacency = [[False for _ in range(number_of_nodes)] for _ in range(number_of_nodes)]
     for i in range(number_of_nodes):
         adjacency[i][i] = True
     for i in range(min(len(edge_index[0]), len(edge_index[1]))):
@@ -76,8 +73,7 @@ def savefigure_A(arguments):
     graph, path = arguments
     position = nx.circular_layout(graph)
     nodes_color = ['#333333'] * graph.number_of_nodes()
-    nx.draw_networkx(graph, position, node_color=nodes_color,
-                     font_color='#ffffff')
+    nx.draw_networkx(graph, position, node_color=nodes_color, font_color='#ffffff')
     plt.tight_layout()
     plt.savefig(path, dpi=300, pil_kwargs={'quality': 85})
     plt.close()
@@ -88,7 +84,7 @@ if __name__ == '__main__':
     argument_parser = ArgumentParser()
     argument_parser.add_argument('--number_of_features', type=int, default=32)
     argument_parser.add_argument('--number_of_classes', type=int, default=16)
-    argument_parser.add_argument('--path', default='')
+    argument_parser.add_argument('--path', required=True)
     arguments = argument_parser.parse_args()
     number_of_features = arguments.number_of_features
     number_of_classes = arguments.number_of_classes

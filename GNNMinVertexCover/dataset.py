@@ -28,13 +28,10 @@ class Dataset(DGLDataset):
             if graph_id in edges_group.groups.keys():
                 edges_of_id = edges_group.get_group(graph_id)
                 sourses = torch.from_numpy(edges_of_id['sourses'].to_numpy())
-                destinations = torch.from_numpy(
-                    edges_of_id['destinations'].to_numpy())
-            graph = dgl.graph((sourses, destinations),
-                              num_nodes=number_of_nodes)
+                destinations = torch.from_numpy(edges_of_id['destinations'].to_numpy())
+            graph = dgl.graph((sourses, destinations), num_nodes=number_of_nodes)
             graph = dgl.add_self_loop(graph)
-            features = torch.rand(
-                [number_of_nodes, self.number_of_features], dtype=torch.float32)
+            features = torch.rand([number_of_nodes, self.number_of_features], dtype=torch.float32)
             graph.ndata['features'] = features
             graph.ndata['labels'] = labels
             self.graphs.append(graph)

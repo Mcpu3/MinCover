@@ -22,8 +22,7 @@ class Dataset():
                 edges_of_id = edges_group.get_group(graph_id)
                 sourses = torch.from_numpy(edges_of_id['sources'].to_numpy())
                 destinations = torch.from_numpy(edges_of_id['destinations'].to_numpy())
-            x = torch.rand(
-                [number_of_nodes, number_of_features], dtype=torch.float32)
+            x = torch.rand([number_of_nodes, number_of_features], dtype=torch.float32)
             edge_index = torch.stack((sourses, destinations))
             data = Data(x, edge_index)
             self.dataset.append(data)
@@ -52,8 +51,7 @@ class Graphs():
                 edges_of_id = edges_group.get_group(graph_id)
                 sourses = torch.from_numpy(edges_of_id['sources'].to_numpy())
                 destinations = torch.from_numpy(edges_of_id['destinations'].to_numpy())
-            graph = dgl.graph((sourses, destinations),
-                              num_nodes=number_of_nodes)
+            graph = dgl.graph((sourses, destinations), num_nodes=number_of_nodes)
             self.graphs.append(graph)
 
     def __getitem__(self, i):

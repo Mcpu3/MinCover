@@ -10,6 +10,7 @@ import networkx as nx
 import numpy as np
 import sklearn.metrics
 import torch
+from torch.utils.tensorboard import SummaryWriter
 from tqdm.contrib.concurrent import process_map
 
 from GNNMinVertexCover.dataset import Dataset
@@ -27,42 +28,33 @@ def main(number_of_features, path):
         graph = dgl.to_networkx(graph)
         graph = nx.Graph(graph)
         graphs.append(graph)
-    acc, auc, ap, sum, mean = test_min_cover(graphs, labels)
+    acc, auc, ap, time_elapsed = test_min_cover(graphs, labels, path, dataset.number_of_train)
     print('Min Cover:')
-    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Mean: {:.3f}s'.format(
-        acc, auc, ap, sum, mean))
-    acc, auc, ap, sum, mean = test_approx_min_cover(graphs, labels)
+    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, ElapsedTime: {:.3f}s'.format(acc, auc, ap, time_elapsed))
+    acc, auc, ap, time_elapsed = test_approx_min_cover(graphs, labels, path, dataset.number_of_train)
     print('Approx Min Cover:')
-    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Mean: {:.3f}s'.format(
-        acc, auc, ap, sum, mean))
+    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, ElapsedTime: {:.3f}s'.format(acc, auc, ap, time_elapsed))
     model = GCN(dataset.number_of_features, dataset.number_of_classes)
     model.load_state_dict(torch.load(os.path.join(path, 'model.pth')))
     model.eval()
-    acc, auc, ap, sum, mean = test_test(test_dataset, model, labels)
+    acc, auc, ap, time_elapsed = test_test(test_dataset, model, labels, path, dataset.number_of_train)
     print('Test:')
-    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, Sum: {:.3f}s, Mean: {:.3f}s'.format(
-        acc, auc, ap, sum, mean))
-    predicts_and_times_elapsed = process_map(
-        min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
+    print('\tAcc: {:.3f}, AUC: {:.3f}, AP: {:.3f}, ElapsedTime: {:.3f}s'.format(acc, auc, ap, time_elapsed))
+    predicts_and_times_elapsed = process_map(min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
     predicts = []
     for predict, _ in predicts_and_times_elapsed:
         predicts.append(predict)
-    process_map(savefigure_min_cover_wrapper, [(graph, predict, os.path.join(path, 'figures/min_covers/{}.jpg'.format(dataset.number_of_train + index)))
-                for index, (graph, predict) in enumerate(zip(graphs, predicts))], max_workers=os.cpu_count()+1)
-    predicts_and_times_elapsed = process_map(
-        approx_min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
+    process_map(savefigure_min_cover_wrapper, [(graph, predict, os.path.join(path, 'figures/min_covers/{}.jpg'.format(dataset.number_of_train + index))) for index, (graph, predict) in enumerate(zip(graphs, predicts))], max_workers=os.cpu_count()+1)
+    predicts_and_times_elapsed = process_map(approx_min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
     predicts = []
     for predict, _ in predicts_and_times_elapsed:
         predicts.append(predict)
-    process_map(savefigure_min_cover_wrapper, [(graph, predict, os.path.join(path, 'figures/approx_min_covers/{}.jpg'.format(dataset.number_of_train + index)))
-                for index, (graph, predict) in enumerate(zip(graphs, predicts))], max_workers=os.cpu_count()+1)
-    predicts_and_times_elapsed = process_map(
-        test_wrapper, [(graph, model) for graph in test_dataset], max_workers=os.cpu_count()+1)
+    process_map(savefigure_min_cover_wrapper, [(graph, predict, os.path.join(path, 'figures/approx_min_covers/{}.jpg'.format(dataset.number_of_train + index))) for index, (graph, predict) in enumerate(zip(graphs, predicts))], max_workers=os.cpu_count()+1)
+    predicts_and_times_elapsed = process_map(test_wrapper, [(graph, model) for graph in test_dataset], max_workers=os.cpu_count()+1)
     predicts = []
     for predict, _ in predicts_and_times_elapsed:
         predicts.append(predict)
-    process_map(savefigure_min_cover_wrapper, [(graph, predict, os.path.join(path, 'figures/tests/{}.jpg'.format(dataset.number_of_train + index)))
-                for index, (graph, predict) in enumerate(zip(graphs, predicts))], max_workers=os.cpu_count()+1)
+    process_map(savefigure_min_cover_wrapper, [(graph, predict, os.path.join(path, 'figures/tests/{}.jpg'.format(dataset.number_of_train + index))) for index, (graph, predict) in enumerate(zip(graphs, predicts))], max_workers=os.cpu_count()+1)
 
 
 def min_cover_wrapper(arguments):
@@ -102,12 +94,11 @@ def min_cover(arguments):
     return predict, time_elapsed
 
 
-def test_min_cover(graphs, labels):
+def test_min_cover(graphs, labels, path, number_of_train):
     accs = np.array([])
     aucs = np.array([])
     aps = np.array([])
-    predicts_and_times_elapsed = process_map(
-        min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
+    predicts_and_times_elapsed = process_map(min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
     predicts = []
     times_elapsed = np.array([])
     for predict, time_elapsed in predicts_and_times_elapsed:
@@ -120,7 +111,13 @@ def test_min_cover(graphs, labels):
         aucs = np.append(aucs, auc)
         ap = sklearn.metrics.average_precision_score(label, predict)
         aps = np.append(aps, ap)
-    return np.mean(accs), np.mean(aucs), np.mean(aps), np.sum(times_elapsed), np.mean(times_elapsed)
+    with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
+        for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs, aucs, aps, times_elapsed)):
+            summary_writer.add_scalar('Acc/test', acc, number_of_train + index)
+            summary_writer.add_scalar('AUC/test', auc, number_of_train + index)
+            summary_writer.add_scalar('AP/test', ap, number_of_train + index)
+            summary_writer.add_scalar('ElapsedTime/test', time_elapsed, number_of_train + index)
+    return np.mean(accs), np.mean(aucs), np.mean(aps), np.mean(times_elapsed)
 
 
 def approx_min_cover_wrapper(arguments):
@@ -144,12 +141,11 @@ def approx_min_cover(arguments):
     return predict, time_elapsed
 
 
-def test_approx_min_cover(graphs, labels):
+def test_approx_min_cover(graphs, labels, path, number_of_train):
     accs = np.array([])
     aucs = np.array([])
     aps = np.array([])
-    predicts_and_times_elapsed = process_map(
-        approx_min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
+    predicts_and_times_elapsed = process_map(approx_min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
     predicts = []
     times_elapsed = np.array([])
     for predict, time_elapsed in predicts_and_times_elapsed:
@@ -162,7 +158,13 @@ def test_approx_min_cover(graphs, labels):
         aucs = np.append(aucs, auc)
         ap = sklearn.metrics.average_precision_score(label, predict)
         aps = np.append(aps, ap)
-    return np.mean(accs), np.mean(aucs), np.mean(aps), np.sum(times_elapsed), np.mean(times_elapsed)
+    with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
+        for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs, aucs, aps, times_elapsed)):
+            summary_writer.add_scalar('Acc/test', acc, number_of_train + index)
+            summary_writer.add_scalar('AUC/test', auc, number_of_train + index)
+            summary_writer.add_scalar('AP/test', ap, number_of_train + index)
+            summary_writer.add_scalar('ElapsedTime/test', time_elapsed, number_of_train + index)
+    return np.mean(accs), np.mean(aucs), np.mean(aps), np.mean(times_elapsed)
 
 
 def test_wrapper(arguments):
@@ -182,12 +184,11 @@ def test(arguments):
     return predict, time_elapsed
 
 
-def test_test(dataset, model, labels):
+def test_test(dataset, model, labels, path, number_of_train):
     accs = np.array([])
     aucs = np.array([])
     aps = np.array([])
-    predicts_and_times_elapsed = process_map(
-        test_wrapper, [(graph, model) for graph in dataset], max_workers=os.cpu_count()+1)
+    predicts_and_times_elapsed = process_map(test_wrapper, [(graph, model) for graph in dataset], max_workers=os.cpu_count()+1)
     predicts = []
     times_elapsed = np.array([])
     for predict, time_elapsed in predicts_and_times_elapsed:
@@ -200,7 +201,13 @@ def test_test(dataset, model, labels):
         aucs = np.append(aucs, auc)
         ap = sklearn.metrics.average_precision_score(label, predict)
         aps = np.append(aps, ap)
-    return np.mean(accs), np.mean(aucs), np.mean(aps), np.sum(times_elapsed), np.mean(times_elapsed)
+    with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
+        for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs, aucs, aps, times_elapsed)):
+            summary_writer.add_scalar('Acc/test', acc, number_of_train + index)
+            summary_writer.add_scalar('AUC/test', auc, number_of_train + index)
+            summary_writer.add_scalar('AP/test', ap, number_of_train + index)
+            summary_writer.add_scalar('ElapsedTime/test', time_elapsed, number_of_train + index)
+    return np.mean(accs), np.mean(aucs), np.mean(aps), np.mean(times_elapsed)
 
 
 def savefigure_min_cover_wrapper(arguments):
@@ -227,7 +234,7 @@ if __name__ == '__main__':
     freeze_support()
     argument_parser = ArgumentParser()
     argument_parser.add_argument('--number_of_features', type=int, default=32)
-    argument_parser.add_argument('--path', default='')
+    argument_parser.add_argument('--path', required=True)
     arguments = argument_parser.parse_args()
     number_of_features = arguments.number_of_features
     path = os.path.join('./runs/', arguments.path)
