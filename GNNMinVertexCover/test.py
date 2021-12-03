@@ -13,7 +13,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from tqdm.contrib.concurrent import process_map
 
-from GNNMinVertexCover.dataset import Dataset
+from dataset import Dataset
 from gcn import GCN
 
 
@@ -113,10 +113,10 @@ def test_min_cover(graphs, labels, path, number_of_train):
         aps = np.append(aps, ap)
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
         for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs, aucs, aps, times_elapsed)):
-            summary_writer.add_scalar('Acc/test', acc, number_of_train + index)
-            summary_writer.add_scalar('AUC/test', auc, number_of_train + index)
-            summary_writer.add_scalar('AP/test', ap, number_of_train + index)
-            summary_writer.add_scalar('ElapsedTime/test', time_elapsed, number_of_train + index)
+            summary_writer.add_scalar('Acc/MinCover', acc, number_of_train + index)
+            summary_writer.add_scalar('AUC/MinCover', auc, number_of_train + index)
+            summary_writer.add_scalar('AP/MinCover', ap, number_of_train + index)
+            summary_writer.add_scalar('ElapsedTime/MinCover', time_elapsed, number_of_train + index)
     return np.mean(accs), np.mean(aucs), np.mean(aps), np.mean(times_elapsed)
 
 
@@ -160,10 +160,10 @@ def test_approx_min_cover(graphs, labels, path, number_of_train):
         aps = np.append(aps, ap)
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
         for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs, aucs, aps, times_elapsed)):
-            summary_writer.add_scalar('Acc/test', acc, number_of_train + index)
-            summary_writer.add_scalar('AUC/test', auc, number_of_train + index)
-            summary_writer.add_scalar('AP/test', ap, number_of_train + index)
-            summary_writer.add_scalar('ElapsedTime/test', time_elapsed, number_of_train + index)
+            summary_writer.add_scalar('Acc/ApproxMinCover', acc, number_of_train + index)
+            summary_writer.add_scalar('AUC/ApproxMinCover', auc, number_of_train + index)
+            summary_writer.add_scalar('AP/ApproxMinCover', ap, number_of_train + index)
+            summary_writer.add_scalar('ElapsedTime/ApproxMinCover', time_elapsed, number_of_train + index)
     return np.mean(accs), np.mean(aucs), np.mean(aps), np.mean(times_elapsed)
 
 
@@ -203,10 +203,10 @@ def test_test(dataset, model, labels, path, number_of_train):
         aps = np.append(aps, ap)
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
         for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs, aucs, aps, times_elapsed)):
-            summary_writer.add_scalar('Acc/test', acc, number_of_train + index)
-            summary_writer.add_scalar('AUC/test', auc, number_of_train + index)
-            summary_writer.add_scalar('AP/test', ap, number_of_train + index)
-            summary_writer.add_scalar('ElapsedTime/test', time_elapsed, number_of_train + index)
+            summary_writer.add_scalar('Acc/Test', acc, number_of_train + index)
+            summary_writer.add_scalar('AUC/Test', auc, number_of_train + index)
+            summary_writer.add_scalar('AP/Test', ap, number_of_train + index)
+            summary_writer.add_scalar('ElapsedTime/Test', time_elapsed, number_of_train + index)
     return np.mean(accs), np.mean(aucs), np.mean(aps), np.mean(times_elapsed)
 
 

@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from GNNMinVertexCover.dataset import Dataset
+from dataset import Dataset
 from gcn import GCN
 
 
@@ -48,10 +48,10 @@ def train(dataset, model, epochs, path):
                     loss.backward()
                     optimizer.step()
                     pbar.set_postfix_str('epoch: {}, loss: {:.3f}, acc: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, np.average(losses), np.average(accs), np.average(aucs), np.average(aps)))
-            summary_writer.add_scalar('Loss/train', np.average(losses), epoch)
-            summary_writer.add_scalar('Acc/train', np.average(accs), epoch)
-            summary_writer.add_scalar('AUC/train', np.average(aucs), epoch)
-            summary_writer.add_scalar('AP/train', np.average(aps), epoch)
+            summary_writer.add_scalar('Loss/Train', np.average(losses), epoch)
+            summary_writer.add_scalar('Acc/Train', np.average(accs), epoch)
+            summary_writer.add_scalar('AUC/Train', np.average(aucs), epoch)
+            summary_writer.add_scalar('AP/Train', np.average(aps), epoch)
     return model
 
 
