@@ -23,14 +23,13 @@ def main(number_of_x, number_of_classes, path):
 
 def test(dataset, model, path, number_of_train):
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
-        with tqdm(dataset) as pbar:
-            for index, data in enumerate(pbar):
-                edge_index, x = data['edge_index'], data['x']
-                z = model.encode(x, edge_index)
-                negative_edge_index = negative_sampling(edge_index, z.size(0))
-                auc, ap = model.test(z, edge_index, negative_edge_index)
-                summary_writer.add_scalar('AUC/Test', auc, number_of_train + index)
-                summary_writer.add_scalar('AP/Test', ap, number_of_train + index)
+        for index, data in tqdm(dataset):
+            edge_index, x = data['edge_index'], data['x']
+            z = model.encode(x, edge_index)
+            negative_edge_index = negative_sampling(edge_index, z.size(0))
+            auc, ap = model.test(z, edge_index, negative_edge_index)
+            summary_writer.add_scalar('AUC/Test', auc, number_of_train + index)
+            summary_writer.add_scalar('AP/Test', ap, number_of_train + index)
 
 
 if __name__ == '__main__':
