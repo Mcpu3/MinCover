@@ -35,7 +35,7 @@ def main(graph_id, path):
 
 if __name__ == '__main__':
     argument_parser = ArgumentParser()
-    argument_parser.add_argument('--graph_id', type=int, default=500)
+    argument_parser.add_argument('--graph_id', type=int, required=True)
     argument_parser.add_argument('--path', required=True)
     arguments = argument_parser.parse_args()
     graph_id = arguments.graph_id

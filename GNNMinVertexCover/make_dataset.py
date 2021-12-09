@@ -17,7 +17,7 @@ def main(number_of_graphs, number_of_nodes, p_min, p_max, path):
         p = min(max(random.random(), p_min), p_max)
         graph = nx.fast_gnp_random_graph(number_of_nodes, p)
         graphs.append(graph)
-    min_covers = process_map(min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count()+1)
+    min_covers = process_map(min_cover_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count() + 1)
     for graph_id, graph in enumerate(tqdm(graphs)):
         nodes = {'graph_id': [], 'nodes': [], 'label': []}
         nodes['graph_id'] = [graph_id for _ in range(graph.number_of_nodes())]

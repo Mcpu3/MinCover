@@ -25,9 +25,7 @@ def train(dataset, model, epochs, path):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
         for epoch in tqdm(range(epochs)):
-            losses = np.array([])
-            aucs = np.array([])
-            aps = np.array([])
+            losses = aucs = aps = []
             with tqdm(dataset) as pbar:
                 for data in pbar:
                     edge_index, x = data['edge_index'], data['x']
@@ -41,13 +39,13 @@ def train(dataset, model, epochs, path):
                     model.eval()
                     auc, ap = model.test(z, edge_index, negative_edge_index)
                     model.train()
-                    losses = np.append(losses, loss.item())
-                    aucs = np.append(aucs, auc)
-                    aps = np.append(aps, ap)
-                    pbar.set_postfix_str('epoch: {}, loss: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, np.mean(losses), np.mean(aucs), np.mean(aps)))
-            summary_writer.add_scalar('Loss/Train', np.mean(losses), epoch)
-            summary_writer.add_scalar('AUC/Train', np.mean(aucs), epoch)
-            summary_writer.add_scalar('AP/Train', np.mean(aps), epoch)
+                    losses.append(loss.item())
+                    aucs.append(auc)
+                    aps.append(ap)
+                    pbar.set_postfix_str('epoch: {}, loss: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, np.mean(np.array(losses)), np.mean(np.array(aucs)), np.mean(np.array(aps))))
+            summary_writer.add_scalar('Loss/Train', np.mean(np.array(losses)), epoch)
+            summary_writer.add_scalar('AUC/Train', np.mean(np.array(aucs)), epoch)
+            summary_writer.add_scalar('AP/Train', np.mean(np.array(aps)), epoch)
     return model
 
 

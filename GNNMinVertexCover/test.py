@@ -55,24 +55,24 @@ def test(dataset, model, graphs, labels, path, number_of_train):
 
 
 def test_min_vertex_cover(graphs, labels):
-    accs = np.array([])
-    aucs = np.array([])
-    aps = np.array([])
-    times_elapsed = np.array([])
+    accs = []
+    aucs = []
+    aps = []
+    times_elapsed = []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_with_time_elapsed_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
         min_cover_copy = min_cover
-        min_cover = np.array([0 for _ in range(len(label))])
+        min_cover = [0 for _ in range(len(label))]
         for node in min_cover_copy:
             min_cover[node] = 1
         min_cover = torch.tensor(min_cover, dtype=torch.int64)
         acc = sklearn.metrics.accuracy_score(label, min_cover)
         auc = sklearn.metrics.roc_auc_score(label, min_cover)
         ap = sklearn.metrics.average_precision_score(label, min_cover)
-        accs = np.append(accs, acc)
-        aucs = np.append(aucs, auc)
-        aps = np.append(aps, ap)
-        times_elapsed = np.append(times_elapsed, time_elapsed)
+        accs.append(acc)
+        aucs.append(auc)
+        aps.append(ap)
+        times_elapsed.append(time_elapsed)
     return accs, aucs, aps, times_elapsed
 
 
@@ -115,24 +115,24 @@ def min_vertex_cover(arguments):
 
 
 def test_min_vertex_cover_approx(graphs, labels):
-    accs = np.array([])
-    aucs = np.array([])
-    aps = np.array([])
-    times_elapsed = np.array([])
+    accs = []
+    aucs = []
+    aps = []
+    times_elapsed = []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_approx_with_time_elapsed_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
         min_cover_copy = min_cover
-        min_cover = np.array([0 for _ in range(len(label))])
+        min_cover = [0 for _ in range(len(label))]
         for node in min_cover_copy:
             min_cover[node] = 1
         min_cover = torch.tensor(min_cover, dtype=torch.int64)
         acc = sklearn.metrics.accuracy_score(label, min_cover)
         auc = sklearn.metrics.roc_auc_score(label, min_cover)
         ap = sklearn.metrics.average_precision_score(label, min_cover)
-        accs = np.append(accs, acc)
-        aucs = np.append(aucs, auc)
-        aps = np.append(aps, ap)
-        times_elapsed = np.append(times_elapsed, time_elapsed)
+        accs.append(acc)
+        aucs.append(auc)
+        aps.append(ap)
+        times_elapsed.append(time_elapsed)
     return accs, aucs, aps, times_elapsed
 
 
@@ -159,24 +159,24 @@ def min_vertex_cover_approx(arguments):
 
 
 def test_min_vertex_cover_with_supervised_learning(dataset, model, labels):
-    accs = np.array([])
-    aucs = np.array([])
-    aps = np.array([])
-    times_elapsed = np.array([])
+    accs = []
+    aucs = []
+    aps = []
+    times_elapsed = []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_with_supervised_learning_with_time_elapsed_wrapper, [(graph, model) for graph in dataset], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
         min_cover_copy = min_cover
-        min_cover = np.array([0 for _ in range(len(label))])
+        min_cover = [0 for _ in range(len(label))]
         for node in min_cover_copy:
             min_cover[node] = 1
         min_cover = torch.tensor(min_cover, dtype=torch.int64)
         acc = sklearn.metrics.accuracy_score(label, min_cover)
         auc = sklearn.metrics.roc_auc_score(label, min_cover)
         ap = sklearn.metrics.average_precision_score(label, min_cover)
-        accs = np.append(accs, acc)
-        aucs = np.append(aucs, auc)
-        aps = np.append(aps, ap)
-        times_elapsed = np.append(times_elapsed, time_elapsed)
+        accs.append(acc)
+        aucs.append(auc)
+        aps.append(ap)
+        times_elapsed.append(time_elapsed)
     return accs, aucs, aps, times_elapsed
 
 
@@ -199,10 +199,11 @@ def min_vertex_cover_with_supervised_learning_with_time_elapsed(arguments):
 def min_vertex_cover_with_supervised_learning(arguments):
     dataset, model = arguments
     x = dataset.ndata['x']
-    min_cover_old = model(dataset, x).argmax(1)
+    min_cover = model(dataset, x).argmax(1)
+    min_cover_copy = min_cover
     min_cover = set()
-    for node in range(len(min_cover_old)):
-        if min_cover_old[node]:
+    for node in range(len(min_cover_copy)):
+        if min_cover_copy[node]:
             min_cover.add(node)
     return min_cover
 

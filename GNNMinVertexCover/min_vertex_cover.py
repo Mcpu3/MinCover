@@ -34,9 +34,10 @@ def min_vertex_cover_approx(arguments):
 def min_vertex_cover_with_supervised_learning(arguments):
     data, model = arguments
     x = data.ndata['x']
-    min_cover_old = model(data, x).argmax(1)
+    min_cover = model(data, x).argmax(1)
+    min_cover_copy = min_cover
     min_cover = set()
-    for node in range(len(min_cover_old)):
-        if min_cover_old[node]:
+    for node in range(len(min_cover_copy)):
+        if min_cover_copy[node]:
             min_cover.add(node)
     return min_cover

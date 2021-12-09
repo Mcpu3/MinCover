@@ -22,9 +22,9 @@ def main(number_of_x, path):
     min_covers = process_map(min_vertex_cover_wrapper, [(graph,) for graph in graphs_test], max_workers=os.cpu_count() + 1)
     min_covers_approx = process_map(min_vertex_cover_approx_wrapper, [(graph,) for graph in graphs_test], max_workers=os.cpu_count() + 1)
     min_covers_with_supervised_learning = process_map(min_vertex_cover_with_supervised_learning_wrapper, [(data, model) for data in dataset_test], max_workers=os.cpu_count() + 1)
-    process_map(save_figure_wrapper, [(graph, min_cover, os.path.join(path, 'figures/min_covers/{}.jpg'.format(index))) for index, (graph, min_cover) in enumerate(zip(graphs_test, min_covers))], max_workers=os.cpu_count() + 1)
-    process_map(save_figure_wrapper, [(graph, min_cover, os.path.join(path, 'figures/approx_min_covers/{}.jpg'.format(index))) for index, (graph, min_cover) in enumerate(zip(graphs_test, min_covers_approx))], max_workers=os.cpu_count() + 1)
-    process_map(save_figure_wrapper, [(graph, min_cover, os.path.join(path, 'figures/min_covers_with_supervised_learning/{}.jpg'.format(index))) for index, (graph, min_cover) in enumerate(zip(graphs_test, min_covers_with_supervised_learning))], max_workers=os.cpu_count() + 1)
+    process_map(save_figure_wrapper, [(graph, min_cover, os.path.join(path, 'figures/min_covers/{}.jpg'.format(dataset.number_of_train + index))) for index, (graph, min_cover) in enumerate(zip(graphs_test, min_covers))], max_workers=os.cpu_count() + 1)
+    process_map(save_figure_wrapper, [(graph, min_cover, os.path.join(path, 'figures/approx_min_covers/{}.jpg'.format(dataset.number_of_train + index))) for index, (graph, min_cover) in enumerate(zip(graphs_test, min_covers_approx))], max_workers=os.cpu_count() + 1)
+    process_map(save_figure_wrapper, [(graph, min_cover, os.path.join(path, 'figures/min_covers_with_supervised_learning/{}.jpg'.format(dataset.number_of_train + index))) for index, (graph, min_cover) in enumerate(zip(graphs_test, min_covers_with_supervised_learning))], max_workers=os.cpu_count() + 1)
 
 
 def min_vertex_cover_wrapper(arguments):
@@ -56,11 +56,11 @@ def save_figure_wrapper(arguments):
 
 def save_figure(arguments):
     graph, min_cover, path = arguments
-    nodes_color = ['#333'] * graph.number_of_nodes()
+    nodes_color = ['#333' for _ in range(graph.number_of_nodes())]
     for node in range(graph.number_of_nodes()):
         if node in min_cover:
             nodes_color[node] = '#009b9f'
-    nx.draw_networkx(graph, nx.circular_layout(graph), node_color=nodes_color, font_color='#ffffff')
+    nx.draw_networkx(graph, nx.circular_layout(graph), node_color=nodes_color, font_color='#fff')
     plt.tight_layout()
     plt.savefig(path, dpi=300, pil_kwargs={'quality': 85})
     plt.close()

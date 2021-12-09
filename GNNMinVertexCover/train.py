@@ -25,10 +25,10 @@ def train(dataset, model, epochs, path):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
         for epoch in tqdm(range(epochs)):
-            losses = np.array([])
-            accs = np.array([])
-            aucs = np.array([])
-            aps = np.array([])
+            losses = []
+            accs = []
+            aucs = []
+            aps = []
             with tqdm(dataset) as pbar:
                 for data in pbar:
                     labels, x = data.ndata['label'], data.ndata['x']
@@ -38,18 +38,18 @@ def train(dataset, model, epochs, path):
                     acc = sklearn.metrics.accuracy_score(labels, min_cover)
                     auc = sklearn.metrics.roc_auc_score(labels, min_cover)
                     ap = sklearn.metrics.average_precision_score(labels, min_cover)
-                    losses = np.append(losses, loss.item())
-                    accs = np.append(accs, acc)
-                    aucs = np.append(aucs, auc)
-                    aps = np.append(aps, ap)
+                    losses.append(loss.item())
+                    accs.append(acc)
+                    aucs.append(auc)
+                    aps.append(ap)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    pbar.set_postfix_str('epoch: {}, loss: {:.3f}, acc: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, np.mean(losses), np.mean(accs), np.mean(aucs), np.mean(aps)))
-            summary_writer.add_scalar('Loss/Train', np.mean(losses), epoch)
-            summary_writer.add_scalar('Acc/Train', np.mean(accs), epoch)
-            summary_writer.add_scalar('AUC/Train', np.mean(aucs), epoch)
-            summary_writer.add_scalar('AP/Train', np.mean(aps), epoch)
+                    pbar.set_postfix_str('epoch: {}, loss: {:.3f}, acc: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, np.mean(np.array(losses)), np.mean(np.array(accs)), np.mean(np.array(aucs)), np.mean(np.array(aps))))
+            summary_writer.add_scalar('Loss/Train', np.mean(np.array(losses)), epoch)
+            summary_writer.add_scalar('Acc/Train', np.mean(np.array(accs)), epoch)
+            summary_writer.add_scalar('AUC/Train', np.mean(np.array(aucs)), epoch)
+            summary_writer.add_scalar('AP/Train', np.mean(np.array(aps)), epoch)
     return model
 
 

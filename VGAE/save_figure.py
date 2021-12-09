@@ -24,8 +24,8 @@ def save_figure_wrapper(arguments):
 
 def save_figure(arguments):
     graph, path = arguments
-    nodes_color = ['#333'] * graph.number_of_nodes()
-    nx.draw_networkx(graph, nx.circular_layout(graph), node_color=nodes_color, font_color='#ffffff')
+    nodes_color = ['#333' for _ in range(graph.number_of_nodes())]
+    nx.draw_networkx(graph, nx.circular_layout(graph), node_color=nodes_color, font_color='#fff')
     plt.tight_layout()
     plt.savefig(path, dpi=300, pil_kwargs={'quality': 85})
     plt.close()
