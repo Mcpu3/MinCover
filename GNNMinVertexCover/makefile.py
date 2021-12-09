@@ -27,7 +27,7 @@ def test(path):
     os.mkdir(os.path.join(path, 'figures/'))
     os.mkdir(os.path.join(path, 'figures/min_covers/'))
     os.mkdir(os.path.join(path, 'figures/approx_min_covers/'))
-    os.mkdir(os.path.join(path, 'figures/tests/'))
+    os.mkdir(os.path.join(path, 'figures/min_covers_with_supervised_learning/'))
 
 
 def clean_make_dataset(path):
@@ -47,11 +47,11 @@ def clean_test(path):
         os.remove(os.path.join(os.path.join(path, 'figures/min_covers/'), dir))
     for dir in os.listdir(os.path.join(path, 'figures/approx_min_covers/')):
         os.remove(os.path.join(os.path.join(path, 'figures/approx_min_covers/'), dir))
-    for dir in os.listdir(os.path.join(path, 'figures/tests/')):
-        os.remove(os.path.join(os.path.join(path, 'figures/tests/'), dir))
+    for dir in os.listdir(os.path.join(path, 'figures/min_covers_with_supervised_learning/')):
+        os.remove(os.path.join(os.path.join(path, 'figures/min_covers_with_supervised_learning/'), dir))
     os.rmdir(os.path.join(path, 'figures/min_covers/'))
     os.rmdir(os.path.join(path, 'figures/approx_min_covers/'))
-    os.rmdir(os.path.join(path, 'figures/tests/'))
+    os.rmdir(os.path.join(path, 'figures/min_covers_with_supervised_learning/'))
     os.rmdir(os.path.join(path, 'figures/'))
 
 

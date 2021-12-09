@@ -6,29 +6,29 @@ import matplotlib.pyplot as plt
 
 
 def main(graph_id, path):
-    fig = plt.figure(constrained_layout=True)
-    fig.suptitle('Graph Id: {}'.format(graph_id))
+    figure = plt.figure(constrained_layout=True)
+    figure.suptitle('Graph id: {}'.format(graph_id))
     images = []
     titles = []
     try:
         images.append(mpimg.imread(os.path.join(path, 'figures/min_covers/{}.jpg'.format(graph_id))))
-        titles.append('Min Cover')
+        titles.append('Min cover')
     except:
         pass
     try:
         images.append(mpimg.imread(os.path.join(path, 'figures/approx_min_covers/{}.jpg'.format(graph_id))))
-        titles.append('Approx Min Cover')
+        titles.append('Approx min cover')
     except:
         pass
     try:
-        images.append(mpimg.imread(os.path.join(path, 'figures/tests/{}.jpg'.format(graph_id))))
-        titles.append('Test')
+        images.append(mpimg.imread(os.path.join(path, 'figures/min_covers_with_supervised_learning/{}.jpg'.format(graph_id))))
+        titles.append('Min cover with supervised learning')
     except:
         pass
     for index, (image, title) in enumerate(zip(images, titles)):
-        ax = fig.add_subplot(1, len(images), index + 1)
-        ax.set_axis_off()
-        ax.set_title(title)
+        axis = figure.add_subplot(1, len(images), index + 1)
+        axis.set_axis_off()
+        axis.set_title(title)
         plt.imshow(image)
     plt.show()
 

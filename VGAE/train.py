@@ -1,20 +1,21 @@
 from argparse import ArgumentParser
 import os
 
-from torch_geometric.nn import VGAE
 import numpy as np
 import torch
+from torch_geometric.nn import VGAE
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from dataset import Dataset
 from encoder import Encoder
+from negative_sampling import negative_sampling
 
 
-def main(number_of_features, number_of_classes, epochs, path):
-    dataset = Dataset(number_of_features, path)
+def main(number_of_x, number_of_classes, epochs, path):
+    dataset = Dataset(number_of_x, path)
     train_dataset = dataset[:dataset.number_of_train]
-    model = VGAE(Encoder(number_of_features, number_of_classes))
+    model = VGAE(Encoder(number_of_x, number_of_classes))
     model.train()
     model = train(train_dataset, model, epochs, path)
     torch.save(model.state_dict(), os.path.join(path, 'model.pth'))
@@ -22,49 +23,32 @@ def main(number_of_features, number_of_classes, epochs, path):
 
 def train(dataset, model, epochs, path):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    with SummaryWriter(os.path.join(path, 'runs/')) as writer:
+    with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
         for epoch in tqdm(range(epochs)):
+            losses = np.array([])
             aucs = np.array([])
             aps = np.array([])
             with tqdm(dataset) as pbar:
                 for data in pbar:
-                    x, edge_index = data['x'], data['edge_index']
+                    edge_index, x = data['edge_index'], data['x']
                     mu, logstd = model.encoder(x, edge_index)
                     z = model.encode(x, edge_index)
-                    neg_edge_index = negative_sampling(edge_index, z.size(0))
-                    loss = model.recon_loss(z, edge_index, neg_edge_index) + model.kl_loss(mu, logstd)
+                    negative_edge_index = negative_sampling(edge_index, z.size(0))
+                    loss = model.recon_loss(z, edge_index, negative_edge_index) + model.kl_loss(mu, logstd)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
                     model.eval()
-                    auc, ap = model.test(z, edge_index, neg_edge_index)
+                    auc, ap = model.test(z, edge_index, negative_edge_index)
                     model.train()
+                    losses = np.append(losses, loss.item())
                     aucs = np.append(aucs, auc)
                     aps = np.append(aps, ap)
-                    pbar.set_postfix_str('epoch: {}, loss: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, loss, np.average(aucs), np.average(aps)))
-            writer.add_scalar('Loss/train', loss, epoch)
-            writer.add_scalar('AUC/train', np.average(aucs), epoch)
-            writer.add_scalar('AP/train', np.average(aps), epoch)
+                    pbar.set_postfix_str('epoch: {}, loss: {:.3f}, auc: {:.3f}, ap: {:.3f}'.format(epoch, np.mean(losses), np.mean(aucs), np.mean(aps)))
+            summary_writer.add_scalar('Loss/Train', np.mean(losses), epoch)
+            summary_writer.add_scalar('AUC/Train', np.mean(aucs), epoch)
+            summary_writer.add_scalar('AP/Train', np.mean(aps), epoch)
     return model
-
-
-def negative_sampling(edge_index, number_of_nodes):
-    adjacency = [[False for _ in range(number_of_nodes)] for _ in range(number_of_nodes)]
-    for i in range(number_of_nodes):
-        adjacency[i][i] = True
-    for i in range(min(len(edge_index[0]), len(edge_index[1]))):
-        adjacency[edge_index[0][i]][edge_index[1][i]] = True
-    sources = np.array([], dtype=np.int64)
-    destinations = np.array([], dtype=np.int64)
-    for i in range(number_of_nodes):
-        for j in range(number_of_nodes):
-            if not adjacency[i][j]:
-                sources = np.append(sources, i)
-                destinations = np.append(destinations, j)
-    sources = torch.from_numpy(sources)
-    destinations = torch.from_numpy(destinations)
-    negative_edge_index = torch.stack((sources, destinations))
-    return negative_edge_index
 
 
 if __name__ == '__main__':
