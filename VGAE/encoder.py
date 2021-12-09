@@ -7,10 +7,7 @@ from torch_geometric.nn import GCNConv
 class Encoder(nn.Module):
     def __init__(self, number_of_x, number_of_classes):
         super(Encoder, self).__init__()
-        self.layers_mu = []
-        self.layers_logstd = []
-        self.biases_mu = []
-        self.biases_logstd = []
+        self.layers_mu = self.layers_logstd = self.biases_mu = self.biases_logstd = []
         number_of_layers_x = []
         number_of_layer_x = number_of_x
         while (number_of_layer_x >= number_of_classes):

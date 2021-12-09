@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 def main(graph_id, path):
     figure = plt.figure(constrained_layout=True)
     figure.suptitle('Graph id: {}'.format(graph_id))
-    images = []
-    titles = []
+    images = titles = []
     try:
         images.append(mpimg.imread(os.path.join(path, 'figures/min_covers/{}.jpg'.format(graph_id))))
         titles.append('Min cover')

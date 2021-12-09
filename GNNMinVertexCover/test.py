@@ -1,11 +1,8 @@
 from argparse import ArgumentParser
 import os
 from multiprocessing import Pool, freeze_support
-import sys
 from time import time
 
-import networkx as nx
-import numpy as np
 import sklearn.metrics
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -13,6 +10,7 @@ from tqdm.contrib.concurrent import process_map
 
 from dataset import Dataset, Graphs
 from gcn import GCN
+from min_vertex_cover import min_vertex_cover, min_vertex_cover_approx, min_vertex_cover_with_supervised_learning
 
 
 def main(number_of_x, path):
@@ -30,9 +28,6 @@ def main(number_of_x, path):
 
 
 def test(dataset, model, graphs, labels, path, number_of_train):
-    labels = []
-    for data in dataset:
-        labels.append(data.ndata['label'])
     accs_of_min_cover, aucs_of_min_cover, aps_of_min_cover, times_elapsed_of_min_cover = test_min_vertex_cover(graphs, labels)
     accs_of_min_cover_approx, aucs_of_min_cover_approx, aps_of_min_cover_approx, times_elapsed_of_min_cover_approx = test_min_vertex_cover_approx(graphs, labels)
     accs_of_min_cover_with_supervised_learning, aucs_of_min_cover_with_supervised_learning, aps_of_min_cover_with_supervised_learning, times_elapsed_of_min_cover_with_supervised_learning = test_min_vertex_cover_with_supervised_learning(dataset, model, labels)
@@ -55,10 +50,7 @@ def test(dataset, model, graphs, labels, path, number_of_train):
 
 
 def test_min_vertex_cover(graphs, labels):
-    accs = []
-    aucs = []
-    aps = []
-    times_elapsed = []
+    accs = aucs = aps = times_elapsed = []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_with_time_elapsed_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
         min_cover_copy = min_cover
@@ -92,33 +84,8 @@ def min_vertex_cover_with_time_elapsed(arguments):
     return min_cover, time_elapsed
 
 
-def min_vertex_cover(arguments):
-    graph = arguments[0]
-    min_cover = set()
-    min_weight = sys.maxsize
-    for i in range(2 ** graph.number_of_nodes()):
-        nodes = set()
-        edges = set()
-        for j in range(graph.number_of_nodes()):
-            if (i >> j) & 1:
-                nodes.add(j)
-                for k in graph.adj[j]:
-                    if j < k:
-                        edges.add((j, k))
-                    else:
-                        edges.add((k, j))
-        if edges == set(graph.edges()):
-            if len(nodes) < min_weight:
-                min_cover = nodes
-                min_weight = len(nodes)
-    return min_cover
-
-
 def test_min_vertex_cover_approx(graphs, labels):
-    accs = []
-    aucs = []
-    aps = []
-    times_elapsed = []
+    accs = aucs = aps = times_elapsed = []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_approx_with_time_elapsed_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
         min_cover_copy = min_cover
@@ -152,17 +119,8 @@ def min_vertex_cover_approx_with_time_elapsed(arguments):
     return min_cover, time_elapsed
 
 
-def min_vertex_cover_approx(arguments):
-    graph = arguments[0]
-    min_cover = nx.algorithms.approximation.min_weighted_vertex_cover(graph)
-    return min_cover
-
-
 def test_min_vertex_cover_with_supervised_learning(dataset, model, labels):
-    accs = []
-    aucs = []
-    aps = []
-    times_elapsed = []
+    accs = aucs = aps = times_elapsed = []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_with_supervised_learning_with_time_elapsed_wrapper, [(graph, model) for graph in dataset], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
         min_cover_copy = min_cover
@@ -194,18 +152,6 @@ def min_vertex_cover_with_supervised_learning_with_time_elapsed(arguments):
     time_end = time()
     time_elapsed = time_end - time_start
     return min_cover, time_elapsed
-
-
-def min_vertex_cover_with_supervised_learning(arguments):
-    dataset, model = arguments
-    x = dataset.ndata['x']
-    min_cover = model(dataset, x).argmax(1)
-    min_cover_copy = min_cover
-    min_cover = set()
-    for node in range(len(min_cover_copy)):
-        if min_cover_copy[node]:
-            min_cover.add(node)
-    return min_cover
 
 
 if __name__ == '__main__':

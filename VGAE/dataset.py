@@ -15,8 +15,7 @@ class Dataset():
         for graph_id in nodes.groups:
             nodes_of_graph_id = nodes.get_group(graph_id)
             number_of_nodes = nodes_of_graph_id.to_numpy().shape[0]
-            sourses = torch.empty(0, dtype=torch.int64)
-            destinations = torch.empty(0, dtype=torch.int64)
+            sourses = destinations = torch.empty(0, dtype=torch.int64)
             if graph_id in edges.groups.keys():
                 edges_of_graph_id = edges.get_group(graph_id)
                 sourses = torch.from_numpy(edges_of_graph_id['sources'].to_numpy())
@@ -42,8 +41,7 @@ class Graphs():
         for graph_id in nodes.groups:
             nodes_of_graph_id = nodes.get_group(graph_id)
             number_of_nodes = nodes_of_graph_id.to_numpy().shape[0]
-            sourses = torch.empty(0, dtype=torch.int64)
-            destinations = torch.empty(0, dtype=torch.int64)
+            sourses = destinations = torch.empty(0, dtype=torch.int64)
             if graph_id in edges.groups.keys():
                 edges_of_graph_id = edges.get_group(graph_id)
                 sourses = torch.from_numpy(edges_of_graph_id['sources'].to_numpy())
