@@ -50,7 +50,7 @@ def test(dataset, model, graphs, labels, path, number_of_train):
 
 
 def test_min_vertex_cover(graphs, labels):
-    accs = aucs = aps = times_elapsed = []
+    accs, aucs, aps, times_elapsed = [], [], [], []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_with_time_elapsed_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
         min_cover_copy = min_cover
@@ -85,7 +85,7 @@ def min_vertex_cover_with_time_elapsed(arguments):
 
 
 def test_min_vertex_cover_approx(graphs, labels):
-    accs = aucs = aps = times_elapsed = []
+    accs, aucs, aps, times_elapsed = [], [], [], []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_approx_with_time_elapsed_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
         min_cover_copy = min_cover
@@ -120,7 +120,7 @@ def min_vertex_cover_approx_with_time_elapsed(arguments):
 
 
 def test_min_vertex_cover_with_supervised_learning(dataset, model, labels):
-    accs = aucs = aps = times_elapsed = []
+    accs, aucs, aps, times_elapsed = [], [], [], []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_with_supervised_learning_with_time_elapsed_wrapper, [(graph, model) for graph in dataset], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
         min_cover_copy = min_cover

@@ -8,7 +8,7 @@ def min_vertex_cover(arguments):
     min_cover = set()
     min_weight = sys.maxsize
     for i in range(2 ** graph.number_of_nodes()):
-        nodes = edges = set()
+        nodes, edges = set(), set()
         for j in range(graph.number_of_nodes()):
             if (i >> j) & 1:
                 nodes.add(j)

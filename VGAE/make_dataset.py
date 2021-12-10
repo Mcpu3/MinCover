@@ -12,7 +12,7 @@ def main(number_of_graphs, number_of_nodes, p_min, p_max, path):
         p = min(max(random.random(), p_min), p_max)
         graph = nx.fast_gnp_random_graph(number_of_nodes, p)
         nodes = {'graph_id': [], 'nodes': []}
-        nodes['graph_id'] = [graph_id] * graph.number_of_nodes()
+        nodes['graph_id'] = [graph_id for _ in range(graph.number_of_nodes())]
         nodes['nodes'] = [node for node in range(graph.number_of_nodes())]
         nodes = pandas.DataFrame(nodes)
         if graph_id == 0:
@@ -20,7 +20,7 @@ def main(number_of_graphs, number_of_nodes, p_min, p_max, path):
         else:
             nodes.to_csv(os.path.join(path, 'dataset/nodes.csv'), header=False, index=False, mode='a')
         edges = {'graph_id': [], 'sources': [], 'destinations': []}
-        edges['graph_id'] = [graph_id] * (graph.number_of_edges() * 2)
+        edges['graph_id'] = [graph_id for _ in range(graph.number_of_edges() * 2)]
         for edge in graph.edges():
             edges['sources'].append(edge[0])
             edges['destinations'].append(edge[1])

@@ -25,7 +25,7 @@ def train(dataset, model, epochs, path):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
         for epoch in tqdm(range(epochs)):
-            losses = accs = aucs = aps = []
+            losses, accs, aucs, aps = [], [], [], []
             with tqdm(dataset) as pbar:
                 for data in pbar:
                     labels, x = data.ndata['label'], data.ndata['x']

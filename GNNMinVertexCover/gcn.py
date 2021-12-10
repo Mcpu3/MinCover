@@ -7,7 +7,7 @@ import torch.nn.functional as F
 class GCN(nn.Module):
     def __init__(self, number_of_x, number_of_classes):
         super(GCN, self).__init__()
-        self.layers = self.biases = []
+        self.layers, self.biases = [], []
         number_of_layers_x = []
         number_of_layer_x = number_of_x
         while (number_of_layer_x >= number_of_classes):
