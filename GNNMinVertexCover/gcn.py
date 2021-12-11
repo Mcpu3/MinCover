@@ -19,10 +19,9 @@ class GCN(nn.Module):
         self.layers = nn.ModuleList(self.layers)
         self.biases = nn.ParameterList(self.biases)
 
-    def forward(self, graph, x):
-        h = x
+    def forward(self, data, x):
         for hidden, bias in zip(self.layers, self.biases):
-            h = hidden(graph, h)
-            h = F.relu(h + bias)
-        h = F.softmax(h, dim=1)
-        return h
+            x = hidden(data, x)
+            x = F.relu(x + bias)
+        x = F.softmax(x, dim=1)
+        return x

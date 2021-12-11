@@ -8,7 +8,7 @@ def negative_sampling(edge_index, number_of_nodes):
         adjacency[i][i] = True
     for i in range(min(len(edge_index[0]), len(edge_index[1]))):
         adjacency[edge_index[0][i]][edge_index[1][i]] = True
-    sources = destinations = []
+    sources, destinations = [], []
     for i in range(number_of_nodes):
         for j in range(number_of_nodes):
             if not adjacency[i][j]:
