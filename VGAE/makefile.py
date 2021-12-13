@@ -35,6 +35,7 @@ def clean_make_dataset(path):
 
 
 def clean_train(path):
+    os.remove(os.path.join(path, 'model.pth'))
     for dir in os.listdir(os.path.join(path, 'runs/')):
         os.remove(os.path.join(os.path.join(path, 'runs/'), dir))
     os.rmdir(os.path.join(path, 'runs/'))
