@@ -11,8 +11,6 @@ from tqdm import tqdm
 from dataset import Dataset
 from gcn import GCN
 
-from torchviz import make_dot
-
 
 def main(number_of_x, epochs, path):
     dataset = Dataset(number_of_x, path)
