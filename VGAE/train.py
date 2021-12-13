@@ -16,7 +16,6 @@ def main(number_of_x, number_of_classes, epochs, path):
     dataset = Dataset(number_of_x, path)
     train_dataset = dataset[:dataset.number_of_train]
     model = VGAE(Encoder(number_of_x, number_of_classes))
-    print(model)
     model.train()
     model = train(train_dataset, model, epochs, path)
     torch.save(model.state_dict(), os.path.join(path, 'model.pth'))
