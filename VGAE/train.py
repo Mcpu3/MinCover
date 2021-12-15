@@ -50,9 +50,9 @@ def train(dataset, model, epochs, path):
 
 if __name__ == '__main__':
     argument_parser = ArgumentParser()
-    argument_parser.add_argument('--number_of_x', type=int, default=32)
+    argument_parser.add_argument('--number_of_x', type=int, default=2048)
     argument_parser.add_argument('--number_of_classes', type=int, default=16)
-    argument_parser.add_argument('--epochs', type=int, default=64)
+    argument_parser.add_argument('--epochs', type=int, default=512)
     argument_parser.add_argument('--path', required=True)
     arguments = argument_parser.parse_args()
     number_of_x = arguments.number_of_x
