@@ -3,9 +3,9 @@ import os
 
 import numpy as np
 import torch
+from torch.utils.tensorboard import SummaryWriter
 from torch_geometric.nn import VGAE
 from torch_geometric.utils import negative_sampling
-from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from dataset import Dataset
