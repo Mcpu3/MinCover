@@ -4,20 +4,19 @@ import os
 import numpy as np
 import torch
 from torch_geometric.nn import VGAE
+from torch_geometric.utils import negative_sampling
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from dataset import Dataset
 from encoder import Encoder
-from negative_sampling import negative_sampling
 
 
 def main(number_of_x, number_of_classes, epochs, path):
     dataset = Dataset(number_of_x, path)
-    train_dataset = dataset[:dataset.number_of_train]
     model = VGAE(Encoder(number_of_x, number_of_classes))
     model.train()
-    model = train(train_dataset, model, epochs, path)
+    model = train(dataset, model, epochs, path)
     torch.save(model.state_dict(), os.path.join(path, 'model.pth'))
 
 

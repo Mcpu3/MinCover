@@ -26,6 +26,7 @@ def train(path):
 def test(path):
     os.mkdir(os.path.join(path, 'figures/'))
     os.mkdir(os.path.join(path, 'figures/A/'))
+    os.mkdir(os.path.join(path, 'figures/A Tilda/'))
 
 
 def clean_make_dataset(path):
@@ -44,7 +45,10 @@ def clean_train(path):
 def clean_test(path):
     for dir in os.listdir(os.path.join(path, 'figures/A/')):
         os.remove(os.path.join(os.path.join(path, 'figures/A/'), dir))
+    for dir in os.listdir(os.path.join(path, 'figures/A Tilda/')):
+        os.remove(os.path.join(os.path.join(path, 'figures/A Tilda/'), dir))
     os.rmdir(os.path.join(path, 'figures/A/'))
+    os.rmdir(os.path.join(path, 'figures/A Tilda/'))
     os.rmdir(os.path.join(path, 'figures/'))
 
 

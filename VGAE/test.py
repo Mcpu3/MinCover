@@ -1,29 +1,27 @@
 from argparse import ArgumentParser
 import os
 
-import numpy as np
 import torch
 from torch_geometric.nn import VGAE
+from torch_geometric.utils import negative_sampling
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from dataset import Dataset
 from encoder import Encoder
-from negative_sampling import negative_sampling
 
 
 def main(number_of_x, number_of_classes, path):
     dataset = Dataset(number_of_x, path)
-    dataset_test = dataset[dataset.number_of_train:]
     model = VGAE(Encoder(number_of_x, number_of_classes))
     model.load_state_dict(torch.load(os.path.join(path, 'model.pth')))
     model.eval()
-    test(dataset_test, model, path, dataset.number_of_train)
+    test(dataset, model, path, dataset.number_of_train)
 
 
 def test(dataset, model, path, number_of_train):
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
-        for index, data in tqdm(dataset):
+        for index, data in enumerate(tqdm(dataset)):
             edge_index, x = data['edge_index'], data['x']
             z = model.encode(x, edge_index)
             negative_edge_index = negative_sampling(edge_index, z.size(0))

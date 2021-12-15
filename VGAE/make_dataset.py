@@ -35,10 +35,10 @@ def main(number_of_graphs, number_of_nodes, p_min, p_max, path):
 
 if __name__ == '__main__':
     argument_parser = ArgumentParser()
-    argument_parser.add_argument('--number_of_graphs', type=int, default=2)
-    argument_parser.add_argument('--number_of_nodes', type=int, default=16)
+    argument_parser.add_argument('--number_of_graphs', type=int, default=1)
+    argument_parser.add_argument('--number_of_nodes', type=int, default=1024)
     argument_parser.add_argument('--p_min', type=float, default=0.1)
-    argument_parser.add_argument('--p_max', type=float, default=0.9)
+    argument_parser.add_argument('--p_max', type=float, default=0.1)
     argument_parser.add_argument('--path', required=True)
     arguments = argument_parser.parse_args()
     number_of_graphs = arguments.number_of_graphs

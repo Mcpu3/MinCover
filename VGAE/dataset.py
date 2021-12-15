@@ -21,10 +21,10 @@ class Dataset():
                 sources = torch.from_numpy(edges_of_graph_id['sources'].to_numpy())
                 destinations = torch.from_numpy(edges_of_graph_id['destinations'].to_numpy())
             edge_index = torch.stack((sources, destinations))
+            print(len(edge_index[0]))
             x = torch.rand([number_of_nodes, number_of_x], dtype=torch.float32)
             data = Data(x, edge_index)
             self.dataset.append(data)
-        self.number_of_train = int(len(self.dataset) * 0.5)
 
     def __getitem__(self, index):
         return self.dataset[index]
