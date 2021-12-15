@@ -34,7 +34,7 @@ def train(dataset, model, epochs, path):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    model.test()
+                    model.eval()
                     min_cover = model(data, x).argmax(1)
                     model.train()
                     acc = sklearn.metrics.accuracy_score(labels, min_cover)
