@@ -30,23 +30,23 @@ def test(path):
 
 
 def clean_make_dataset(path):
-    for dir in os.listdir(os.path.join(path, 'dataset/')):
-        os.remove(os.path.join(os.path.join(path, 'dataset/'), dir))
+    for directory in os.listdir(os.path.join(path, 'dataset/')):
+        os.remove(os.path.join(os.path.join(path, 'dataset/'), directory))
     os.rmdir(os.path.join(path, 'dataset/'))
 
 
 def clean_train(path):
     os.remove(os.path.join(path, 'model.pth'))
-    for dir in os.listdir(os.path.join(path, 'runs/')):
-        os.remove(os.path.join(os.path.join(path, 'runs/'), dir))
+    for directory in os.listdir(os.path.join(path, 'runs/')):
+        os.remove(os.path.join(os.path.join(path, 'runs/'), directory))
     os.rmdir(os.path.join(path, 'runs/'))
 
 
 def clean_test(path):
-    for dir in os.listdir(os.path.join(path, 'figures/A/')):
-        os.remove(os.path.join(os.path.join(path, 'figures/A/'), dir))
-    for dir in os.listdir(os.path.join(path, 'figures/A Tilda/')):
-        os.remove(os.path.join(os.path.join(path, 'figures/A Tilda/'), dir))
+    for directory in os.listdir(os.path.join(path, 'figures/A/')):
+        os.remove(os.path.join(os.path.join(path, 'figures/A/'), directory))
+    for directory in os.listdir(os.path.join(path, 'figures/A Tilda/')):
+        os.remove(os.path.join(os.path.join(path, 'figures/A Tilda/'), directory))
     os.rmdir(os.path.join(path, 'figures/A/'))
     os.rmdir(os.path.join(path, 'figures/A Tilda/'))
     os.rmdir(os.path.join(path, 'figures/'))

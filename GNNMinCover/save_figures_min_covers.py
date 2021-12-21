@@ -11,7 +11,7 @@ from min_vertex_cover import min_vertex_cover, min_vertex_cover_approx, min_vert
 from dataset import Dataset, Graphs
 from gcn import GCN
 
-def main(number_of_x, without_min_covers, without_approx_min_covers, without_min_covers_with_supervised_learning, path):
+def main(number_of_x, without_min_covers, without_min_covers_approx, without_min_covers_with_supervised_learning, path):
     dataset = Dataset(number_of_x, path)
     graphs = Graphs(path)
     dataset_test = dataset[dataset.number_of_train:]
@@ -24,7 +24,7 @@ def main(number_of_x, without_min_covers, without_approx_min_covers, without_min
     if not without_min_covers:
         min_covers = process_map(min_vertex_cover_wrapper, [(graph,) for graph in graphs_test], max_workers=os.cpu_count() + 1)
         process_map(save_figure_wrapper, [(graph, min_cover, os.path.join(path, 'figures/min_covers/{}.jpg'.format(dataset.number_of_train + index))) for index, (graph, min_cover) in enumerate(zip(graphs_test, min_covers))], max_workers=os.cpu_count() + 1)
-    if not without_approx_min_covers:
+    if not without_min_covers_approx:
         min_covers_approx = process_map(min_vertex_cover_approx_wrapper, [(graph,) for graph in graphs_test], max_workers=os.cpu_count() + 1)
         process_map(save_figure_wrapper, [(graph, min_cover, os.path.join(path, 'figures/approx_min_covers/{}.jpg'.format(dataset.number_of_train + index))) for index, (graph, min_cover) in enumerate(zip(graphs_test, min_covers_approx))], max_workers=os.cpu_count() + 1)
     if not without_min_covers_with_supervised_learning:
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     arguments = argument_parser.parse_args()
     number_of_x = arguments.number_of_x
     without_min_covers = arguments.without_min_covers
-    without_approx_min_covers = arguments.without_approx_min_covers
+    without_min_covers_approx = arguments.without_approx_min_covers
     without_min_covers_with_supervised_learning = arguments.without_min_covers_with_supervised_learning
     path = os.path.join('./runs/', arguments.path)
-    main(number_of_x, without_min_covers, without_approx_min_covers, without_min_covers_with_supervised_learning, path)
+    main(number_of_x, without_min_covers, without_min_covers_approx, without_min_covers_with_supervised_learning, path)

@@ -30,26 +30,23 @@ def main(number_of_x, without_min_covers, without_approx_min_covers, without_min
 
 
 def test(dataset, model, graphs, labels, without_min_covers, without_approx_min_covers, without_min_covers_with_supervised_learning, path, number_of_train):
-    if not without_min_covers:
-        accs_of_min_cover, aucs_of_min_cover, aps_of_min_cover, times_elapsed_of_min_cover = test_min_vertex_cover(graphs, labels)
-    if not without_approx_min_covers:
-        accs_of_min_cover_approx, aucs_of_min_cover_approx, aps_of_min_cover_approx, times_elapsed_of_min_cover_approx = test_min_vertex_cover_approx(graphs, labels)
-    if not without_min_covers_with_supervised_learning:
-        accs_of_min_cover_with_supervised_learning, aucs_of_min_cover_with_supervised_learning, aps_of_min_cover_with_supervised_learning, times_elapsed_of_min_cover_with_supervised_learning = test_min_vertex_cover_with_supervised_learning(dataset, model, labels)
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
         if not without_min_covers:
-            for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs_of_min_cover, aucs_of_min_cover, aps_of_min_cover, times_elapsed_of_min_cover)):
+            accs_of_min_covers, aucs_of_min_covers, aps_of_min_covers, times_elapsed_of_min_covers = test_min_vertex_cover(graphs, labels)
+            for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs_of_min_covers, aucs_of_min_covers, aps_of_min_covers, times_elapsed_of_min_covers)):
                 summary_writer.add_scalar('Acc/TestMinCover', acc, number_of_train + index)
                 summary_writer.add_scalar('AUC/TestMinCover', auc, number_of_train + index)
                 summary_writer.add_scalar('AP/TestMinCover', ap, number_of_train + index)
                 summary_writer.add_scalar('ElapsedTime/TestMinCover', time_elapsed, number_of_train + index)
         if not without_approx_min_covers:
+            accs_of_min_cover_approx, aucs_of_min_cover_approx, aps_of_min_cover_approx, times_elapsed_of_min_cover_approx = test_min_vertex_cover_approx(graphs, labels)
             for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs_of_min_cover_approx, aucs_of_min_cover_approx, aps_of_min_cover_approx, times_elapsed_of_min_cover_approx)):
                 summary_writer.add_scalar('Acc/TestApproxMinCover', acc, number_of_train + index)
                 summary_writer.add_scalar('AUC/TestApproxMinCover', auc, number_of_train + index)
                 summary_writer.add_scalar('AP/TestApproxMinCover', ap, number_of_train + index)
                 summary_writer.add_scalar('ElapsedTime/TestApproxMinCover', time_elapsed, number_of_train + index)
         if not without_min_covers_with_supervised_learning:
+            accs_of_min_cover_with_supervised_learning, aucs_of_min_cover_with_supervised_learning, aps_of_min_cover_with_supervised_learning, times_elapsed_of_min_cover_with_supervised_learning = test_min_vertex_cover_with_supervised_learning(dataset, model, labels)
             for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs_of_min_cover_with_supervised_learning, aucs_of_min_cover_with_supervised_learning, aps_of_min_cover_with_supervised_learning, times_elapsed_of_min_cover_with_supervised_learning)):
                 summary_writer.add_scalar('Acc/TestMinCoverWithSupervisedLearning', acc, number_of_train + index)
                 summary_writer.add_scalar('AUC/TestMinCoverWithSupervisedLearning', auc, number_of_train + index)

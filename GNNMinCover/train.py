@@ -29,8 +29,7 @@ def train(dataset, model, epochs, path):
             with tqdm(dataset) as pbar:
                 for data in pbar:
                     labels, x = data.ndata['label'], data.ndata['x']
-                    logits = model(data, x)
-                    loss = F.cross_entropy(logits, labels)
+                    loss = F.cross_entropy(model(data, x), labels)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
