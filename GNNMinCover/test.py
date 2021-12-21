@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import copy
 import os
 from multiprocessing import Pool, freeze_support
 from time import time
@@ -45,20 +46,27 @@ def test(dataset, model, graphs, labels, without_min_covers, without_approx_min_
                 summary_writer.add_scalar('AUC/TestApproxMinCover', auc, number_of_train + index)
                 summary_writer.add_scalar('AP/TestApproxMinCover', ap, number_of_train + index)
                 summary_writer.add_scalar('ElapsedTime/TestApproxMinCover', time_elapsed, number_of_train + index)
+        # if not without_min_covers_with_supervised_learning:
+        #     accs_of_min_cover_with_supervised_learning, aucs_of_min_cover_with_supervised_learning, aps_of_min_cover_with_supervised_learning, times_elapsed_of_min_cover_with_supervised_learning = test_min_vertex_cover_with_supervised_learning(dataset, model, labels)
+        #     for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs_of_min_cover_with_supervised_learning, aucs_of_min_cover_with_supervised_learning, aps_of_min_cover_with_supervised_learning, times_elapsed_of_min_cover_with_supervised_learning)):
+        #         summary_writer.add_scalar('Acc/TestMinCoverWithSupervisedLearning', acc, number_of_train + index)
+        #         summary_writer.add_scalar('AUC/TestMinCoverWithSupervisedLearning', auc, number_of_train + index)
+        #         summary_writer.add_scalar('AP/TestMinCoverWithSupervisedLearning', ap, number_of_train + index)
+        #         summary_writer.add_scalar('ElapsedTime/TestMinCoverWithSupervisedLearning', time_elapsed, number_of_train + index)
         if not without_min_covers_with_supervised_learning:
-            accs_of_min_cover_with_supervised_learning, aucs_of_min_cover_with_supervised_learning, aps_of_min_cover_with_supervised_learning, times_elapsed_of_min_cover_with_supervised_learning = test_min_vertex_cover_with_supervised_learning(dataset, model, labels)
+            accs_of_min_cover_with_supervised_learning, aucs_of_min_cover_with_supervised_learning, aps_of_min_cover_with_supervised_learning, times_elapsed_of_min_cover_with_supervised_learning = test_min_vertex_cover_with_supervised_learning_1(dataset, model, labels)
             for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs_of_min_cover_with_supervised_learning, aucs_of_min_cover_with_supervised_learning, aps_of_min_cover_with_supervised_learning, times_elapsed_of_min_cover_with_supervised_learning)):
-                summary_writer.add_scalar('Acc/TestMinCoverWithSupervisedLearning', acc, number_of_train + index)
-                summary_writer.add_scalar('AUC/TestMinCoverWithSupervisedLearning', auc, number_of_train + index)
-                summary_writer.add_scalar('AP/TestMinCoverWithSupervisedLearning', ap, number_of_train + index)
-                summary_writer.add_scalar('ElapsedTime/TestMinCoverWithSupervisedLearning', time_elapsed, number_of_train + index)
+                summary_writer.add_scalar('Acc/TestMinCoverWithSupervisedLearning1', acc, number_of_train + index)
+                summary_writer.add_scalar('AUC/TestMinCoverWithSupervisedLearning1', auc, number_of_train + index)
+                summary_writer.add_scalar('AP/TestMinCoverWithSupervisedLearning1', ap, number_of_train + index)
+                summary_writer.add_scalar('ElapsedTime/TestMinCoverWithSupervisedLearning1', time_elapsed, number_of_train + index)
 
 
 def test_min_vertex_cover(graphs, labels):
     accs, aucs, aps, times_elapsed = [], [], [], []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_with_time_elapsed_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
-        min_cover_copy = min_cover
+        min_cover_copy = copy.deepcopy(min_cover)
         min_cover = [0 for _ in range(len(label))]
         for node in min_cover_copy:
             min_cover[node] = 1
@@ -93,7 +101,7 @@ def test_min_vertex_cover_approx(graphs, labels):
     accs, aucs, aps, times_elapsed = [], [], [], []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_approx_with_time_elapsed_wrapper, [(graph,) for graph in graphs], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
-        min_cover_copy = min_cover
+        min_cover_copy = copy.deepcopy(min_cover)
         min_cover = [0 for _ in range(len(label))]
         for node in min_cover_copy:
             min_cover[node] = 1
@@ -128,7 +136,7 @@ def test_min_vertex_cover_with_supervised_learning(dataset, model, labels):
     accs, aucs, aps, times_elapsed = [], [], [], []
     min_covers_and_times_elapsed = process_map(min_vertex_cover_with_supervised_learning_with_time_elapsed_wrapper, [(graph, model) for graph in dataset], max_workers=os.cpu_count() + 1)
     for (min_cover, time_elapsed), label in zip(min_covers_and_times_elapsed, labels):
-        min_cover_copy = min_cover
+        min_cover_copy = copy.deepcopy(min_cover)
         min_cover = [0 for _ in range(len(label))]
         for node in min_cover_copy:
             min_cover[node] = 1
@@ -157,6 +165,30 @@ def min_vertex_cover_with_supervised_learning_with_time_elapsed(arguments):
     time_end = time()
     time_elapsed = time_end - time_start
     return min_cover, time_elapsed
+
+
+# 0個の辺を持つ頂点をmin_coversから削除
+def test_min_vertex_cover_with_supervised_learning_1(dataset, model, labels):
+    accs, aucs, aps, times_elapsed = [], [], [], []
+    min_covers_and_times_elapsed = process_map(min_vertex_cover_with_supervised_learning_with_time_elapsed_wrapper, [(data, model) for data in dataset], max_workers=os.cpu_count() + 1)
+    for (min_cover, time_elapsed), label, data in zip(min_covers_and_times_elapsed, labels, dataset):
+        min_cover_copy = copy.deepcopy(min_cover)
+        for node in min_cover_copy:
+            if len(data.successors(node)) == 1:
+                min_cover.remove(node)
+        min_cover_copy = copy.deepcopy(min_cover)
+        min_cover = [0 for _ in range(len(label))]
+        for node in min_cover_copy:
+            min_cover[node] = 1
+        min_cover = torch.tensor(min_cover, dtype=torch.int64)
+        acc = sklearn.metrics.accuracy_score(label, min_cover)
+        auc = sklearn.metrics.roc_auc_score(label, min_cover)
+        ap = sklearn.metrics.average_precision_score(label, min_cover)
+        accs.append(acc)
+        aucs.append(auc)
+        aps.append(ap)
+        times_elapsed.append(time_elapsed)
+    return accs, aucs, aps, times_elapsed
 
 
 if __name__ == '__main__':

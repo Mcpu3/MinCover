@@ -1,3 +1,4 @@
+import copy
 import sys
 
 import networkx as nx
@@ -34,7 +35,7 @@ def min_vertex_cover_with_supervised_learning(arguments):
     data, model = arguments
     x = data.ndata['x']
     min_cover = model(data, x).argmax(1)
-    min_cover_copy = min_cover
+    min_cover_copy = copy.deepcopy(min_cover)
     min_cover = set()
     for node in range(len(min_cover_copy)):
         if min_cover_copy[node]:

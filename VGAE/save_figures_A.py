@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import copy
 from multiprocessing import Pool, freeze_support
 import os
 
@@ -23,7 +24,7 @@ def main(number_of_x, number_of_classes, path):
         edge_index, x = data['edge_index'], data['x']
         z = model.encode(x, edge_index)
         adjacency = model.decoder.forward_all(z)
-        adjacency_copy = adjacency
+        adjacency_copy = copy.deepcopy(adjacency)
         adjacency = [[0 for _ in range(len(adjacency_copy[0]))] for _ in range(len(adjacency_copy))]
         for i in range(len(adjacency)):
             for j in range(len(adjacency[i])):

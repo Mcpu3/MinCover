@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import copy
 import os
 
 import matplotlib.pyplot as plt
@@ -57,7 +58,7 @@ def from_event_accumulator_to_list_of_scalar_event(event_accumulator, tag):
 
 
 def from_list_of_scalar_event_to_list(accs, aucs, aps, times_elapsed):
-    accs_copy, aucs_copy, aps_copy, times_elapsed_copy = accs, aucs, aps, times_elapsed
+    accs_copy, aucs_copy, aps_copy, times_elapsed_copy = copy.deepcopy(accs), copy.deepcopy(aucs), copy.deepcopy(aps), copy.deepcopy(times_elapsed)
     graphs_id, accs, aucs, aps, times_elapsed = [], [], [], [], []
     for acc, auc, ap, time_elapsed in zip(accs_copy, aucs_copy, aps_copy, times_elapsed_copy):
         graphs_id.append(time_elapsed.step)
