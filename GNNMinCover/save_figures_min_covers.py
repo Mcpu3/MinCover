@@ -67,8 +67,8 @@ def save_figure(arguments):
     for node in range(graph.number_of_nodes()):
         if node in min_cover:
             nodes_color[node] = '#009b9f'
-    for index, edge in enumerate(graph.edges()):
-        if edge[0] not in min_cover and edge[1] not in min_cover:
+    for index, (edge_source, edge_destination) in enumerate(graph.edges()):
+        if (edge_source not in min_cover) and (edge_destination not in min_cover):
             edges_color[index] = '#942343'
     nx.draw_networkx(graph, nx.circular_layout(graph), node_color=nodes_color, edge_color=edges_color, font_color='#fff')
     plt.tight_layout()

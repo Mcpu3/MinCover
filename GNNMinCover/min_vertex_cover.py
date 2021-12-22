@@ -61,7 +61,7 @@ def min_vertex_cover_with_supervised_learning_1(arguments):
     return min_cover
 
 
-# 0個の辺を持つ頂点をmin_coverから削除, 
+# 0個の辺を持つ頂点をmin_coverから削除, 接続された頂点がmin_coverに無い辺に接続された頂点で構成された部分グラフにおいて最適解を求解
 def min_vertex_cover_with_supervised_learning_2(arguments):
     data, model = arguments
     x = data.ndata['x']
