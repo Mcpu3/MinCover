@@ -12,26 +12,26 @@ from tqdm.contrib.concurrent import process_map
 
 from dataset import Dataset, Graphs
 from gcn import GCN
-from min_vertex_cover import min_vertex_cover, min_vertex_cover_approx, min_vertex_cover_with_supervised_learning, min_vertex_cover_with_supervised_learning_1
+from min_vertex_cover import min_vertex_cover, min_vertex_cover_approx, min_vertex_cover_with_supervised_learning, min_vertex_cover_with_supervised_learning_1, min_vertex_cover_with_supervised_learning_2
 
 
-def main(number_of_x, without_min_covers, without_approx_min_covers, without_with_supervised_learning, without_with_supervised_learning_1, path):
+def main(number_of_x, without_min_covers, without_approx_min_covers, without_with_supervised_learning, without_with_supervised_learning_1, without_with_supervised_learning_2, path):
     dataset = Dataset(number_of_x, path)
     graphs = Graphs(path)
     dataset_test = dataset[dataset.number_of_train:]
     graphs_test = graphs[dataset.number_of_train:]
     model = None
-    if (not without_with_supervised_learning) or (not without_with_supervised_learning_1):
+    if (not without_with_supervised_learning) or (not without_with_supervised_learning_1) or (not without_with_supervised_learning_2):
         model = GCN(dataset.number_of_x, dataset.number_of_classes)
         model.load_state_dict(torch.load(os.path.join(path, 'model.pth')))
         model.eval()
     labels = []
     for data in dataset_test:
         labels.append(data.ndata['label'])
-    test(dataset_test, model, graphs_test, labels, without_min_covers, without_approx_min_covers, without_with_supervised_learning, without_with_supervised_learning_1, path, dataset.number_of_train)
+    test(dataset_test, model, graphs_test, labels, without_min_covers, without_approx_min_covers, without_with_supervised_learning, without_with_supervised_learning_1, without_with_supervised_learning_2, path, dataset.number_of_train)
 
 
-def test(dataset, model, graphs, labels, without_min_covers, without_approx_min_covers, without_with_supervised_learning, without_with_supervised_learning_1, path, number_of_train):
+def test(dataset, model, graphs, labels, without_min_covers, without_approx_min_covers, without_with_supervised_learning, without_with_supervised_learning_1, without_with_supervised_learning_2, path, number_of_train):
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
         if not without_min_covers:
             accs_of_min_covers, aucs_of_min_covers, aps_of_min_covers, times_elapsed_of_min_covers = test_min_vertex_cover(graphs, labels)
@@ -61,6 +61,13 @@ def test(dataset, model, graphs, labels, without_min_covers, without_approx_min_
                 summary_writer.add_scalar('AUC/TestWithSupervisedLearning1', auc, number_of_train + index)
                 summary_writer.add_scalar('AP/TestWithSupervisedLearning1', ap, number_of_train + index)
                 summary_writer.add_scalar('ElapsedTime/TestWithSupervisedLearning1', time_elapsed, number_of_train + index)
+        if not without_with_supervised_learning_2:
+            accs_of_with_supervised_learning_2, aucs_of_with_supervised_learning_2, aps_of_with_supervised_learning_2, times_elapsed_of_with_supervised_learning_2 = test_with_supervised_learning_2(dataset, model, labels)
+            for index, (acc, auc, ap, time_elapsed) in enumerate(zip(accs_of_with_supervised_learning_2, aucs_of_with_supervised_learning_2, aps_of_with_supervised_learning_2, times_elapsed_of_with_supervised_learning_2)):
+                summary_writer.add_scalar('Acc/TestWithSupervisedLearning2', acc, number_of_train + index)
+                summary_writer.add_scalar('AUC/TestWithSupervisedLearning2', auc, number_of_train + index)
+                summary_writer.add_scalar('AP/TestWithSupervisedLearning2', ap, number_of_train + index)
+                summary_writer.add_scalar('ElapsedTime/TestWithSupervisedLearning2', time_elapsed, number_of_train + index)
 
 
 def test_min_vertex_cover(graphs, labels):
@@ -188,6 +195,36 @@ def with_supervised_learning_1_with_time_elapsed(arguments):
     return min_cover, time_elapsed
 
 
+def test_with_supervised_learning_2(dataset, model, labels):
+    accs, aucs, aps, times_elapsed = [], [], [], []
+    min_covers_and_times_elapsed = []
+    for data in tqdm(dataset):
+        min_covers_and_times_elapsed.append(with_supervised_learning_2_with_time_elapsed((data, model)))
+    for (min_cover, time_elapsed), label, data in zip(min_covers_and_times_elapsed, labels, dataset):
+        min_cover_copy = copy.deepcopy(min_cover)
+        min_cover = [0 for _ in range(len(label))]
+        for node in min_cover_copy:
+            min_cover[node] = 1
+        min_cover = torch.tensor(min_cover, dtype=torch.int64)
+        acc = sklearn.metrics.accuracy_score(label, min_cover)
+        auc = sklearn.metrics.roc_auc_score(label, min_cover)
+        ap = sklearn.metrics.average_precision_score(label, min_cover)
+        accs.append(acc)
+        aucs.append(auc)
+        aps.append(ap)
+        times_elapsed.append(time_elapsed)
+    return accs, aucs, aps, times_elapsed
+
+
+def with_supervised_learning_2_with_time_elapsed(arguments):
+    dataset, model = arguments
+    time_start = time()
+    min_cover = min_vertex_cover_with_supervised_learning_2((dataset, model))
+    time_end = time()
+    time_elapsed = time_end - time_start
+    return min_cover, time_elapsed
+
+
 if __name__ == '__main__':
     freeze_support()
     argument_parser = ArgumentParser()
@@ -196,6 +233,7 @@ if __name__ == '__main__':
     argument_parser.add_argument('--without_approx_min_covers', action='store_true')
     argument_parser.add_argument('--without_with_supervised_learning', action='store_true')
     argument_parser.add_argument('--without_with_supervised_learning_1', action='store_true')
+    argument_parser.add_argument('--without_with_supervised_learning_2', action='store_true')
     argument_parser.add_argument('--path', required=True)
     arguments = argument_parser.parse_args()
     number_of_x = arguments.number_of_x
@@ -203,5 +241,6 @@ if __name__ == '__main__':
     without_approx_min_covers = arguments.without_approx_min_covers
     without_with_supervised_learning = arguments.without_with_supervised_learning
     without_with_supervised_learning_1 = arguments.without_with_supervised_learning_1
+    without_with_supervised_learning_2 = arguments.without_with_supervised_learning_2
     path = os.path.join('./runs/', arguments.path)
-    main(number_of_x, without_min_covers, without_approx_min_covers, without_with_supervised_learning, without_with_supervised_learning_1, path)
+    main(number_of_x, without_min_covers, without_approx_min_covers, without_with_supervised_learning, without_with_supervised_learning_1, without_with_supervised_learning_2, path)

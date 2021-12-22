@@ -29,6 +29,11 @@ def main(graph_id, path):
         titles.append('With supervised learning 1')
     except:
         pass
+    try:
+        images.append(mpimg.imread(os.path.join(path, 'figures/with_supervised_learning_2/{}.jpg'.format(graph_id))))
+        titles.append('With supervised learning 2')
+    except:
+        pass
     for index, (image, title) in enumerate(zip(images, titles)):
         axis = figure.add_subplot(1, len(images), index + 1)
         axis.set_axis_off()
