@@ -27,7 +27,8 @@ def test(path):
     os.mkdir(os.path.join(path, 'figures/'))
     os.mkdir(os.path.join(path, 'figures/min_covers/'))
     os.mkdir(os.path.join(path, 'figures/approx_min_covers/'))
-    os.mkdir(os.path.join(path, 'figures/min_covers_with_supervised_learning/'))
+    os.mkdir(os.path.join(path, 'figures/with_supervised_learning/'))
+    os.mkdir(os.path.join(path, 'figures/with_supervised_learning_1/'))
     os.mkdir(os.path.join(path, 'figures/boxes/'))
 
 
@@ -49,13 +50,16 @@ def clean_test(path):
         os.remove(os.path.join(os.path.join(path, 'figures/min_covers/'), directory))
     for directory in os.listdir(os.path.join(path, 'figures/approx_min_covers/')):
         os.remove(os.path.join(os.path.join(path, 'figures/approx_min_covers/'), directory))
-    for directory in os.listdir(os.path.join(path, 'figures/min_covers_with_supervised_learning/')):
-        os.remove(os.path.join(os.path.join(path, 'figures/min_covers_with_supervised_learning/'), directory))
+    for directory in os.listdir(os.path.join(path, 'figures/with_supervised_learning/')):
+        os.remove(os.path.join(os.path.join(path, 'figures/with_supervised_learning/'), directory))
+    for directory in os.listdir(os.path.join(path, 'figures/with_supervised_learning_1/')):
+        os.remove(os.path.join(os.path.join(path, 'figures/with_supervised_learning_1/'), directory))
     for directory in os.listdir(os.path.join(path, 'figures/boxes/')):
         os.remove(os.path.join(os.path.join(path, 'figures/boxes/'), directory))
     os.rmdir(os.path.join(path, 'figures/min_covers/'))
     os.rmdir(os.path.join(path, 'figures/approx_min_covers/'))
-    os.rmdir(os.path.join(path, 'figures/min_covers_with_supervised_learning/'))
+    os.rmdir(os.path.join(path, 'figures/with_supervised_learning/'))
+    os.rmdir(os.path.join(path, 'figures/with_supervised_learning_1/'))
     os.rmdir(os.path.join(path, 'figures/boxes/'))
     os.rmdir(os.path.join(path, 'figures/'))
 

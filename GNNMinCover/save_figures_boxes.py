@@ -9,7 +9,7 @@ import seaborn as sns
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 
-def main(without_min_covers, without_min_covers_approx, without_min_covers_with_supervised_learning, path, file_name):
+def main(without_min_covers, without_min_covers_approx, without_with_supervised_learning, without_with_supervised_learning_1, path, file_name):
     event_accumulator = EventAccumulator(os.path.join(os.path.join(path, 'runs/'), file_name)).Reload()
     graphs_id, accs, aucs, aps, times_elapsed, columns = [], [], [], [], [], []
     if not without_min_covers:
@@ -30,15 +30,24 @@ def main(without_min_covers, without_min_covers_approx, without_min_covers_with_
         aps.append(aps_of_min_covers_approx)
         times_elapsed.append(times_elapsed_of_min_covers_approx)
         columns.append('Approx min covers')
-    if not without_min_covers_with_supervised_learning:
-        accs_of_min_covers_with_supervised_learning, aucs_of_min_covers_with_supervised_learning, aps_of_min_covers_with_supervised_learning, times_elapsed_of_min_covers_with_supervised_learning = from_event_accumulator_to_list_of_scalar_event(event_accumulator, 'TestMinCoverWithSupervisedLearning')
-        graphs_id_of_min_covers_with_supervised_learning, accs_of_min_covers_with_supervised_learning, aucs_of_min_covers_with_supervised_learning, aps_of_min_covers_with_supervised_learning, times_elapsed_of_min_covers_with_supervised_learning = from_list_of_scalar_event_to_list(accs_of_min_covers_with_supervised_learning, aucs_of_min_covers_with_supervised_learning, aps_of_min_covers_with_supervised_learning, times_elapsed_of_min_covers_with_supervised_learning)
-        graphs_id = graphs_id_of_min_covers_with_supervised_learning
-        accs.append(accs_of_min_covers_with_supervised_learning)
-        aucs.append(aucs_of_min_covers_with_supervised_learning)
-        aps.append(aps_of_min_covers_with_supervised_learning)
-        times_elapsed.append(times_elapsed_of_min_covers_with_supervised_learning)
-        columns.append('Min covers with supervised learning')
+    if not without_with_supervised_learning:
+        accs_of_with_supervised_learning, aucs_of_with_supervised_learning, aps_of_with_supervised_learning, times_elapsed_of_with_supervised_learning = from_event_accumulator_to_list_of_scalar_event(event_accumulator, 'TestWithSupervisedLearning')
+        graphs_id_of_with_supervised_learning, accs_of_with_supervised_learning, aucs_of_with_supervised_learning, aps_of_with_supervised_learning, times_elapsed_of_with_supervised_learning = from_list_of_scalar_event_to_list(accs_of_with_supervised_learning, aucs_of_with_supervised_learning, aps_of_with_supervised_learning, times_elapsed_of_with_supervised_learning)
+        graphs_id = graphs_id_of_with_supervised_learning
+        accs.append(accs_of_with_supervised_learning)
+        aucs.append(aucs_of_with_supervised_learning)
+        aps.append(aps_of_with_supervised_learning)
+        times_elapsed.append(times_elapsed_of_with_supervised_learning)
+        columns.append('With supervised learning')
+    if not without_with_supervised_learning_1:
+        accs_of_with_supervised_learning_1, aucs_of_with_supervised_learning_1, aps_of_with_supervised_learning_1, times_elapsed_of_with_supervised_learning_1 = from_event_accumulator_to_list_of_scalar_event(event_accumulator, 'TestWithSupervisedLearning1')
+        graphs_id_of_with_supervised_learning_1, accs_of_with_supervised_learning_1, aucs_of_with_supervised_learning_1, aps_of_with_supervised_learning_1, times_elapsed_of_with_supervised_learning_1 = from_list_of_scalar_event_to_list(accs_of_with_supervised_learning_1, aucs_of_with_supervised_learning_1, aps_of_with_supervised_learning_1, times_elapsed_of_with_supervised_learning_1)
+        graphs_id = graphs_id_of_with_supervised_learning_1
+        accs.append(accs_of_with_supervised_learning_1)
+        aucs.append(aucs_of_with_supervised_learning_1)
+        aps.append(aps_of_with_supervised_learning_1)
+        times_elapsed.append(times_elapsed_of_with_supervised_learning_1)
+        columns.append('With supervised learning 1')
     data_of_accs = pd.DataFrame(np.transpose(np.array(accs)), graphs_id, columns)
     data_of_aucs = pd.DataFrame(np.transpose(np.array(aucs)), graphs_id, columns)
     data_of_aps = pd.DataFrame(np.transpose(np.array(aps)), graphs_id, columns)
@@ -85,13 +94,15 @@ if __name__ == '__main__':
     argument_parser = ArgumentParser()
     argument_parser.add_argument('--without_min_covers', action='store_true')
     argument_parser.add_argument('--without_approx_min_covers', action='store_true')
-    argument_parser.add_argument('--without_min_covers_with_supervised_learning', action='store_true')
+    argument_parser.add_argument('--without_with_supervised_learning', action='store_true')
+    argument_parser.add_argument('--without_with_supervised_learning_1', action='store_true')
     argument_parser.add_argument('--path', required=True)
     argument_parser.add_argument('--file_name', required=True)
     arguments = argument_parser.parse_args()
     without_min_covers = arguments.without_min_covers
     without_min_covers_approx = arguments.without_approx_min_covers
-    without_min_covers_with_supervised_learning = arguments.without_min_covers_with_supervised_learning
+    without_with_supervised_learning = arguments.without_with_supervised_learning
+    without_with_supervised_learning_1 = arguments.without_with_supervised_learning_1
     path = os.path.join('./runs/', arguments.path)
     file_name = arguments.file_name
-    main(without_min_covers, without_min_covers_approx, without_min_covers_with_supervised_learning, path, file_name)
+    main(without_min_covers, without_min_covers_approx, without_with_supervised_learning, without_with_supervised_learning_1, path, file_name)

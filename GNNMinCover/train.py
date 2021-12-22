@@ -28,17 +28,18 @@ def train(dataset, model, epochs, path):
             losses, accs, aucs, aps = [], [], [], []
             with tqdm(dataset) as pbar:
                 for data in pbar:
-                    labels, x = data.ndata['label'], data.ndata['x']
-                    loss = F.cross_entropy(model(data, x), labels)
+                    label = data.ndata['label']
+                    x = data.ndata['x']
+                    loss = F.cross_entropy(model(data, x), label)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
                     model.eval()
                     min_cover = model(data, x).argmax(1)
                     model.train()
-                    acc = sklearn.metrics.accuracy_score(labels, min_cover)
-                    auc = sklearn.metrics.roc_auc_score(labels, min_cover)
-                    ap = sklearn.metrics.average_precision_score(labels, min_cover)
+                    acc = sklearn.metrics.accuracy_score(label, min_cover)
+                    auc = sklearn.metrics.roc_auc_score(label, min_cover)
+                    ap = sklearn.metrics.average_precision_score(label, min_cover)
                     losses.append(loss.item())
                     accs.append(acc)
                     aucs.append(auc)

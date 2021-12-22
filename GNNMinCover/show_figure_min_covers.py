@@ -20,8 +20,13 @@ def main(graph_id, path):
     except:
         pass
     try:
-        images.append(mpimg.imread(os.path.join(path, 'figures/min_covers_with_supervised_learning/{}.jpg'.format(graph_id))))
-        titles.append('Min cover with supervised learning')
+        images.append(mpimg.imread(os.path.join(path, 'figures/with_supervised_learning/{}.jpg'.format(graph_id))))
+        titles.append('With supervised learning')
+    except:
+        pass
+    try:
+        images.append(mpimg.imread(os.path.join(path, 'figures/with_supervised_learning_1/{}.jpg'.format(graph_id))))
+        titles.append('With supervised learning 1')
     except:
         pass
     for index, (image, title) in enumerate(zip(images, titles)):

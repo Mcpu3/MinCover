@@ -27,7 +27,8 @@ def train(dataset, model, epochs, path):
             losses, aucs, aps = [], [], []
             with tqdm(dataset) as pbar:
                 for data in pbar:
-                    edge_index, x = data['edge_index'], data['x']
+                    edge_index = data['edge_index']
+                    x = data['x']
                     mu, logstd = model.encoder(x, edge_index)
                     z = model.encode(x, edge_index)
                     negative_edge_index = negative_sampling(edge_index, z.size(0))

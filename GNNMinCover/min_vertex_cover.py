@@ -41,3 +41,20 @@ def min_vertex_cover_with_supervised_learning(arguments):
         if min_cover_copy[node]:
             min_cover.add(node)
     return min_cover
+
+
+# 0個の辺を持つ頂点をmin_coverから削除
+def min_vertex_cover_with_supervised_learning_1(arguments):
+    data, model = arguments
+    x = data.ndata['x']
+    min_cover = model(data, x).argmax(1)
+    min_cover_copy = copy.deepcopy(min_cover)
+    min_cover = set()
+    for node in range(len(min_cover_copy)):
+        if min_cover_copy[node]:
+            min_cover.add(node)
+    min_cover_copy = copy.deepcopy(min_cover)
+    for node in min_cover_copy:
+        if len(data.successors(node)) == 1:
+            min_cover.remove(node)
+    return min_cover

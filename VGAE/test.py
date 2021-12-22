@@ -22,7 +22,8 @@ def main(number_of_x, number_of_classes, path):
 def test(dataset, model, path, number_of_train):
     with SummaryWriter(os.path.join(path, 'runs/')) as summary_writer:
         for index, data in enumerate(tqdm(dataset)):
-            edge_index, x = data['edge_index'], data['x']
+            edge_index = data['edge_index']
+            x = data['x']
             z = model.encode(x, edge_index)
             negative_edge_index = negative_sampling(edge_index, z.size(0))
             auc, ap = model.test(z, edge_index, negative_edge_index)

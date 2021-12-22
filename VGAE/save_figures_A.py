@@ -21,7 +21,8 @@ def main(number_of_x, number_of_classes, path):
     model.eval()
     process_map(save_figure_wrapper, [(graph, os.path.join(path, 'figures/A/{}.jpg'.format(index))) for index, graph in enumerate(graphs)], max_workers=os.cpu_count() + 1)
     for index, data in enumerate(tqdm(dataset)):
-        edge_index, x = data['edge_index'], data['x']
+        edge_index = data['edge_index']
+        x = data['x']
         z = model.encode(x, edge_index)
         adjacency = model.decoder.forward_all(z)
         adjacency_copy = copy.deepcopy(adjacency)
