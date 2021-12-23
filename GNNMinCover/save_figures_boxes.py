@@ -73,12 +73,12 @@ def main(without_min_covers, without_min_covers_approx, without_with_supervised_
     data_of_times_elapsed = pd.DataFrame(np.transpose(np.array(times_elapsed)), graphs_id, columns)
     data_of_evaluations_1 = pd.DataFrame(np.transpose(np.array(evaluations_1)), graphs_id, columns)
     data_of_evaluations_2 = pd.DataFrame(np.transpose(np.array(evaluations_2)), graphs_id, columns)
-    save_figure(data_of_accs, False, 'Acc', None, os.path.join(path, 'figures/boxes/accs.jpg'))
-    save_figure(data_of_aucs, False, 'AUC', None, os.path.join(path, 'figures/boxes/aucs.jpg'))
-    save_figure(data_of_aps, False, 'AP', None, os.path.join(path, 'figures/boxes/aps.jpg'))
-    save_figure(data_of_times_elapsed, True, 'Elapsed time', '[s]', os.path.join(path, 'figures/boxes/elapsed_times.jpg'))
-    save_figure(data_of_evaluations_1, False, 'Evaluation 1', None, os.path.join(path, 'figures/boxes/evaluations_1.jpg'))
-    save_figure(data_of_evaluations_2, False, 'Evaluation 2', None, os.path.join(path, 'figures/boxes/evaluations_2.jpg'))
+    save_figure(data_of_accs, False, 'Acc', os.path.join(path, 'figures/boxes/accs.jpg'))
+    save_figure(data_of_aucs, False, 'AUC', os.path.join(path, 'figures/boxes/aucs.jpg'))
+    save_figure(data_of_aps, False, 'AP', os.path.join(path, 'figures/boxes/aps.jpg'))
+    save_figure(data_of_times_elapsed, True, 'Elapsed time [s]', os.path.join(path, 'figures/boxes/elapsed_times.jpg'))
+    save_figure(data_of_evaluations_1, False, 'Evaluation 1', os.path.join(path, 'figures/boxes/evaluations_1.jpg'))
+    save_figure(data_of_evaluations_2, False, 'Evaluation 2', os.path.join(path, 'figures/boxes/evaluations_2.jpg'))
 
 
 def from_event_accumulator_to_list_of_scalar_event(event_accumulator, tag):
@@ -105,12 +105,11 @@ def from_list_of_scalar_event_to_list(accs, aucs, aps, times_elapsed, evaluation
     return graphs_id, accs, aucs, aps, times_elapsed, evaluations_1, evaluations_2
 
 
-def save_figure(data, is_log, title, y_label, path):
-    axis = sns.boxplot(data=data)
+def save_figure(data, is_log, x_label, path):
+    axis = sns.boxplot(data=data, orient='h', showfliers=False, boxprops={'facecolor': '#fff'})
     if is_log:
-        axis.set_yscale('log')
-    axis.set_title(title)
-    axis.set_ylabel(y_label)
+        axis.set_xscale('log')
+    axis.set_xlabel(x_label)
     axis.grid(True, 'both')
     plt.tight_layout()
     plt.savefig(path, dpi=300, pil_kwargs={'quality': 85})
