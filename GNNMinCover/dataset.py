@@ -31,7 +31,7 @@ class Dataset(DGLDataset):
             x = torch.rand([number_of_nodes, self.number_of_x], dtype=torch.float32)
             data.ndata['label'], data.ndata['x'] = label, x
             self.dataset.append(data)
-        self.number_of_train = int(len(self.dataset) * 0.5)
+        self.number_of_train = int(len(self.dataset) * 0.8)
 
     def __getitem__(self, index):
         return self.dataset[index]
